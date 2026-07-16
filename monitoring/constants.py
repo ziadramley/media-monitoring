@@ -19,6 +19,13 @@ MAX_CONCURRENT_FETCHES = 8
 # Standfirsts longer than this get trimmed at a word boundary.
 STANDFIRST_MAX_CHARS = 300
 
+# Trailing feed boilerplate stripped from standfirsts
+# (compared case-insensitively at the end of the text).
+STANDFIRST_BOILERPLATE = (
+    "Continue reading...",
+    "Continue reading…",
+)
+
 # Rolling windows, measured back from run time in the local timezone.
 DATE_RANGES = {
     "past_24_hours": 24,
