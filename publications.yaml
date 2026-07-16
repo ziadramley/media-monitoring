@@ -1,0 +1,117 @@
+# Publication registry
+# =====================
+# Each entry maps a short id (used in config.yaml) to an outlet name and
+# one or more RSS feed URLs. When a publication lists several feeds, their
+# articles are merged and duplicates removed automatically.
+#
+# To add your own outlet:
+#
+#   my_outlet:
+#     name: My Outlet
+#     feeds:
+#       - https://example.com/rss.xml
+#
+# Every feed below was verified working on 2026-07-16. Feeds rot — outlets
+# move, freeze, or remove them without notice (see the README for four
+# well-known outlets that had to be dropped for exactly that reason).
+# The terminal log prints the age of each feed's newest item so you can
+# spot a frozen feed early.
+
+publications:
+  # ---------------------------------------------------------- UK ----
+  bbc:
+    name: BBC News
+    feeds:
+      - https://feeds.bbci.co.uk/news/rss.xml
+      - https://feeds.bbci.co.uk/news/uk/rss.xml
+      - https://feeds.bbci.co.uk/news/politics/rss.xml
+
+  guardian:
+    name: The Guardian
+    feeds:
+      - https://www.theguardian.com/uk/rss
+      - https://www.theguardian.com/politics/rss
+
+  sky:
+    name: Sky News
+    feeds:
+      - https://feeds.skynews.com/feeds/rss/home.xml
+      - https://feeds.skynews.com/feeds/rss/uk.xml
+      - https://feeds.skynews.com/feeds/rss/politics.xml
+
+  telegraph:
+    name: The Telegraph
+    # Note: the Telegraph sits behind aggressive bot protection and may
+    # intermittently refuse requests (HTTP 403). The tool logs a warning
+    # and carries on when that happens.
+    feeds:
+      - https://www.telegraph.co.uk/rss.xml
+
+  ft:
+    name: Financial Times
+    feeds:
+      - https://www.ft.com/rss/home/uk
+      - https://www.ft.com/news-feed?format=rss
+
+  independent:
+    name: The Independent
+    feeds:
+      - https://www.independent.co.uk/rss
+      - https://www.independent.co.uk/news/uk/rss
+
+  dailymail:
+    name: Daily Mail
+    # The old dailymail.co.uk feed URLs now redirect here.
+    feeds:
+      - https://www.dailymail.com/home/index.rss
+      - https://www.dailymail.com/news/index.rss
+
+  politico_eu:
+    name: Politico Europe
+    # Includes the London Playbook newsletter feed (two editions
+    # per weekday).
+    feeds:
+      - https://www.politico.eu/feed/
+      - https://www.politico.eu/newsletter/london-playbook/feed/
+
+  # ---------------------------------------------------------- US ----
+  nyt:
+    name: The New York Times
+    feeds:
+      - https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml
+      - https://rss.nytimes.com/services/xml/rss/nyt/World.xml
+
+  wapo:
+    name: The Washington Post
+    # WaPo's individual feeds are small (4–8 items each), so three
+    # sections are merged for reasonable coverage.
+    feeds:
+      - https://feeds.washingtonpost.com/rss/politics
+      - https://feeds.washingtonpost.com/rss/national
+      - https://feeds.washingtonpost.com/rss/world
+
+  politico_us:
+    name: Politico
+    feeds:
+      - https://www.politico.com/rss/politicopicks.xml
+      - https://rss.politico.com/politics-news.xml
+
+  axios:
+    name: Axios
+    feeds:
+      - https://api.axios.com/feed/
+
+  nbc:
+    name: NBC News
+    feeds:
+      - https://feeds.nbcnews.com/nbcnews/public/news
+
+  wsj:
+    name: The Wall Street Journal
+    # WSJ moved its feeds to the Dow Jones CDN. The old feeds.a.dj.com
+    # URLs still respond but have been frozen since January 2025 —
+    # don't use them.
+    feeds:
+      - https://feeds.content.dowjones.io/public/rss/RSSWorldNews
+      - https://feeds.content.dowjones.io/public/rss/WSJcomUSBusiness
+      - https://feeds.content.dowjones.io/public/rss/RSSMarketsMain

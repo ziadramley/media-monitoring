@@ -1,0 +1,34 @@
+# Your saved searches
+# ===================
+# Each query becomes one section of the report, in the order listed here.
+#
+#   name:         the section heading in the report
+#   keywords:     words or phrases to look for in the headline or standfirst.
+#                 Matching is case-insensitive; multi-word keywords must
+#                 appear as that exact phrase.
+#   match:        "any" = an article matches if ANY keyword appears (default)
+#                 "all" = every keyword must appear
+#   date_range:   past_24_hours | past_48_hours | past_72_hours
+#                 (rolling windows, measured back from when you run the tool)
+#   publications: list of ids from publications.yaml, or "all"
+#
+# The three queries below work out of the box — replace them with your own.
+
+queries:
+  - name: "UK government"
+    keywords: ["downing street", "prime minister", "chancellor", "cabinet"]
+    match: any
+    date_range: past_24_hours
+    publications: [bbc, guardian, sky, telegraph, ft, politico_eu]
+
+  - name: "US politics"
+    keywords: ["white house", "congress", "senate", "supreme court"]
+    match: any
+    date_range: past_24_hours
+    publications: [nyt, wapo, politico_us, axios, nbc]
+
+  - name: "Economy and markets"
+    keywords: ["inflation", "interest rates", "bank of england", "federal reserve"]
+    match: any
+    date_range: past_48_hours
+    publications: all

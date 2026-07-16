@@ -1,0 +1,11 @@
+# Generated reports — output only, never committed
+reports/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# macOS
+.DS_Store
