@@ -162,13 +162,17 @@ def entry_to_article(entry, publication: Publication) -> Article | None:
     if standfirst and standfirst.casefold() == title.casefold():
         standfirst = None  # some feeds repeat the headline as the summary
 
+    author = extract_author(entry)
+    if author and author.casefold() == publication.name.casefold():
+        author = None  # some outlets credit themselves (e.g. NYT live blogs)
+
     return Article(
         title=title,
         url=url,
         dedupe_key=normalize_url(url),
         publication_id=publication.id,
         publication_name=publication.name,
-        author=extract_author(entry),
+        author=author,
         published=parse_published(entry),
         standfirst=standfirst,
     )

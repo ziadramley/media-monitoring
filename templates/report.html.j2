@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Media Monitoring — {{ generated_day }}</title>
+<style>
+  :root {
+    --ink: #1a1a1a;
+    --ink-soft: #4a4a4a;
+    --ink-faint: #7a7a72;
+    --paper: #fbfaf7;
+    --rule: #ddd9d0;
+    --rule-ink: #1a1a1a;
+    --note-bg: #f4f1ea;
+    --warn-bg: #f9f2e7;
+    --warn-border: #d9c6a0;
+  }
+  * { box-sizing: border-box; }
+  html { font-size: 17px; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: Georgia, "Times New Roman", Times, serif;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .sheet { max-width: 46rem; margin: 0 auto; padding: 2.6rem 1.4rem 4rem; }
+
+  .smallcaps {
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.72rem;
+    color: var(--ink-soft);
+  }
+
+  /* Masthead */
+  .toolbar { display: flex; justify-content: flex-end; margin-bottom: 0.6rem; }
+  .download {
+    font-family: Georgia, serif;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-soft);
+    background: none;
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    padding: 0.45em 0.9em;
+    cursor: pointer;
+  }
+  .download:hover { border-color: var(--ink-soft); color: var(--ink); }
+
+  .masthead {
+    text-align: center;
+    border-bottom: 4px double var(--rule-ink);
+    padding-bottom: 1.3rem;
+    margin-bottom: 1.1rem;
+  }
+  .masthead h1 {
+    margin: 0 0 0.35rem;
+    font-size: 2.5rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+  .masthead .dateline { margin: 0 0 0.3rem; }
+  .masthead .counts { margin: 0; font-size: 0.85rem; color: var(--ink-faint); font-style: italic; }
+
+  /* Table of contents */
+  .toc { text-align: center; margin: 0 0 2.2rem; padding: 0.55rem 0; border-bottom: 1px solid var(--rule); }
+  .toc a { color: var(--ink-soft); text-decoration: none; }
+  .toc a:hover { color: var(--ink); text-decoration: underline; }
+  .toc .sep { color: var(--rule); margin: 0 0.55em; }
+  .toc .n { color: var(--ink-faint); }
+
+  /* Warnings */
+  .warnings {
+    background: var(--warn-bg);
+    border: 1px solid var(--warn-border);
+    border-radius: 2px;
+    padding: 0.8rem 1.1rem;
+    margin: 0 0 2rem;
+    font-size: 0.88rem;
+    color: var(--ink-soft);
+  }
+  .warnings p { margin: 0 0 0.35rem; }
+  .warnings ul { margin: 0; padding-left: 1.2rem; }
+  .warnings li { margin: 0.15rem 0; }
+  .warnings code { font-size: 0.8rem; word-break: break-all; }
+
+  /* Sections */
+  section.query { margin: 0 0 2.6rem; }
+  section.query > header {
+    border-top: 1px solid var(--rule-ink);
+    padding-top: 0.85rem;
+    margin-bottom: 1.1rem;
+  }
+  section.query h2 {
+    margin: 0;
+    font-size: 1.55rem;
+    font-weight: 700;
+    line-height: 1.25;
+  }
+  section.query h2 .count {
+    font-size: 0.95rem;
+    font-weight: 400;
+    font-style: italic;
+    color: var(--ink-faint);
+    white-space: nowrap;
+  }
+  .query-meta { margin: 0.3rem 0 0; font-size: 0.8rem; color: var(--ink-faint); }
+  .depth-note {
+    margin: 0.55rem 0 0;
+    padding: 0.45rem 0.7rem;
+    background: var(--note-bg);
+    border-left: 2px solid var(--rule);
+    font-size: 0.8rem;
+    font-style: italic;
+    color: var(--ink-faint);
+  }
+
+  /* Articles */
+  article.entry { padding: 0.95rem 0; border-bottom: 1px solid var(--rule); }
+  article.entry:last-child { border-bottom: none; }
+  .headline { margin: 0 0 0.3rem; font-size: 1.14rem; font-weight: 700; line-height: 1.32; }
+  .headline a { color: inherit; text-decoration: none; }
+  .headline a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .meta { margin: 0 0 0.35rem; }
+  .meta .outlet { color: var(--ink); font-weight: 700; }
+  .standfirst { margin: 0; font-size: 0.94rem; color: var(--ink-soft); line-height: 1.55; }
+
+  .empty { font-style: italic; color: var(--ink-faint); margin: 0.4rem 0 0; }
+
+  footer.colophon {
+    margin-top: 3rem;
+    padding-top: 1rem;
+    border-top: 4px double var(--rule-ink);
+    text-align: center;
+    font-size: 0.8rem;
+    font-style: italic;
+    color: var(--ink-faint);
+  }
+
+  /* Print: made to sit on a morning-meeting table */
+  @media print {
+    html { font-size: 10.5pt; }
+    body { background: #fff; color: #000; }
+    .sheet { max-width: none; padding: 0; }
+    .toolbar, .toc { display: none; }
+    article.entry { break-inside: avoid; }
+    section.query > header { break-after: avoid; }
+    .headline a { text-decoration: none; color: #000; }
+    @page { margin: 2cm; }
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <div class="toolbar">
+    <button type="button" class="download" onclick="downloadMarkdown()">Download as Markdown</button>
+  </div>
+
+  <header class="masthead">
+    <h1>Media Monitoring</h1>
+    <p class="dateline smallcaps">Generated {{ generated_day }} at {{ generated_at.strftime("%H:%M") }}</p>
+    <p class="counts">{{ total_articles }} article{{ "s" if total_articles != 1 }} across {{ sections|length }} search{{ "es" if sections|length != 1 }}</p>
+  </header>
+
+  <nav class="toc smallcaps">
+    {%- for section in sections %}
+    <a href="#{{ section.anchor }}">{{ section.name }} <span class="n">({{ section.articles|length }})</span></a>
+    {%- if not loop.last %}<span class="sep">·</span>{% endif %}
+    {%- endfor %}
+  </nav>
+
+  {% if failed_feeds %}
+  <div class="warnings">
+    <p><strong>{{ failed_feeds|length }} feed{{ "s" if failed_feeds|length != 1 }} could not be reached this run</strong> — coverage from these outlets may be incomplete:</p>
+    <ul>
+      {%- for f in failed_feeds %}
+      <li>{{ f.publication_name }} — <code>{{ f.feed_url }}</code> ({{ f.error }})</li>
+      {%- endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {% for section in sections %}
+  <section class="query" id="{{ section.anchor }}">
+    <header>
+      <h2>{{ section.name }}
+        <span class="count">— {{ section.articles|length }} match{{ "es" if section.articles|length != 1 }}, {{ section.range_label }}</span>
+      </h2>
+      <p class="query-meta">
+        Keywords ({{ section.match }}):
+        {%- for k in section.keywords %} “{{ k }}”{% if not loop.last %},{% endif %}{% endfor %}
+      </p>
+      {% if section.show_depth_note %}
+      <p class="depth-note">RSS feeds hold a limited number of recent items and their depth varies by outlet — over a {{ section.range_label }} window, older articles may be missing from busier feeds.</p>
+      {% endif %}
+    </header>
+
+    {% if section.articles %}
+      {% for a in section.articles %}
+      <article class="entry">
+        <h3 class="headline"><a href="{{ a.url }}" target="_blank" rel="noopener">{{ a.title }}</a></h3>
+        <p class="meta smallcaps">
+          <span class="outlet">{{ a.publication_name }}</span>
+          {%- if a.author %} · {{ a.author }}{% endif %}
+          · <time>{{ a.published|datefmt }}</time>
+        </p>
+        {% if a.standfirst %}<p class="standfirst">{{ a.standfirst }}</p>{% endif %}
+      </article>
+      {% endfor %}
+    {% else %}
+      <p class="empty">No matching articles found.</p>
+    {% endif %}
+  </section>
+  {% endfor %}
+
+  <footer class="colophon">
+    <p>Generated locally from publisher RSS feeds. Headlines link to the publisher’s own site.</p>
+  </footer>
+
+</div>
+
+<script>
+  // The Markdown version of this report, embedded so the download works
+  // even when this file is shared on its own. The tojson filter escapes
+  // any closing script tag inside article text so it can't end this
+  // script element early. (Never write that tag literally in here —
+  // HTML parsers end the element at the first occurrence, even in a
+  // JS comment.)
+  var REPORT_MARKDOWN = {{ markdown_payload|tojson }};
+  var MARKDOWN_FILENAME = {{ markdown_filename|tojson }};
+  function downloadMarkdown() {
+    var blob = new Blob([REPORT_MARKDOWN], { type: "text/markdown;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = MARKDOWN_FILENAME;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+</script>
+</body>
+</html>

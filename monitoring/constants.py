@@ -41,7 +41,7 @@ DEPTH_CAVEAT_RANGES = {"past_48_hours", "past_72_hours"}
 # Deliberately a blocklist, not "strip everything": some sites use a
 # query parameter (e.g. ?id=...) as the article identifier itself.
 # Compared case-insensitively.
-TRACKING_PARAM_PREFIXES = ("utm_", "ns_", "syn")
+TRACKING_PARAM_PREFIXES = ("utm_", "ns_", "syn", "at_")
 TRACKING_PARAM_NAMES = {"fbclid", "gclid", "cmp", "cmpid", "ito", "icid"}
 
 # Output locations.
