@@ -125,9 +125,9 @@
   {% if flash %}<div class="banner ok">{{ flash }}</div>{% endif %}
   {% if top_error %}<div class="banner error">{{ top_error }}</div>{% endif %}
 
-  {% if saved_searches or config_search %}
+  {% if saved_searches %}
   <section class="saved">
-    <h2>Saved searches</h2>
+    <h2>Your saved searches</h2>
     <ul>
       {% for s in saved_searches %}
       <li>
@@ -140,13 +140,19 @@
         </form>
       </li>
       {% endfor %}
-      {% if config_search %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {% if config_search %}
+  <section class="saved">
+    <h2>Start from your config file</h2>
+    <ul>
       <li class="config">
-        <span class="s-name">{{ config_search.name }}</span>
-        <span class="s-count">{{ config_search.queries|length }} search{{ "es" if config_search.queries|length != 1 }} · read-only</span>
+        <span class="s-name">config.yaml</span>
+        <span class="s-count">the {{ config_search.queries|length }} example search{{ "es" if config_search.queries|length != 1 }} that ship with the tool — load them in to use or tweak</span>
         <a href="/edit-config">Load into editor</a>
       </li>
-      {% endif %}
     </ul>
   </section>
   {% endif %}
