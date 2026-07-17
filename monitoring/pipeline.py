@@ -34,6 +34,8 @@ class ReportResult:
     failed: list[FeedFetchResult]
     generated_at: datetime
     total_articles: int
+    report_name: str | None = None
+    publications: int = 0  # distinct outlets searched across all queries
 
 
 def generate_report(
@@ -41,6 +43,7 @@ def generate_report(
     publications: dict[str, Publication],
     now: datetime | None = None,
     reports_dir: str | Path = REPORTS_DIR,
+    report_name: str | None = None,
 ) -> ReportResult:
     """Fetch the feeds the queries need, filter into sections, render
     and write the HTML report. Returns everything the caller needs to
@@ -68,7 +71,8 @@ def generate_report(
         ))
 
     failed = [r for r in fetch_results if not r.ok]
-    html = render_html(sections, failed, now)
+    publications_count = len(needed_ids)
+    html = render_html(sections, failed, now, report_name=report_name, publications=publications_count)
     path = write_report(html, now, reports_dir)
 
     return ReportResult(
@@ -77,4 +81,6 @@ def generate_report(
         failed=failed,
         generated_at=now,
         total_articles=sum(len(s.articles) for s in sections),
+        report_name=report_name,
+        publications=publications_count,
     )

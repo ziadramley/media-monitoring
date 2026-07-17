@@ -1,83 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Media Monitor — Build a report</title>
-<style>
-  :root {
-    --ink: #1a1a1a; --ink-soft: #4a4a4a; --ink-faint: #7a7a72;
-    --paper: #fbfaf7; --field: #ffffff; --rule: #ddd9d0; --rule-ink: #1a1a1a;
-    --accent: #1a1a1a; --error-bg: #f7e9e6; --error-border: #c9a59c; --error-ink: #7a2e22;
-    --ok-bg: #eaf1e8; --ok-border: #a9c3a0; --note-bg: #f4f1ea; --card-bg: #fdfcfa;
-  }
-  * { box-sizing: border-box; }
-  html { font-size: 17px; }
-  body { margin: 0; background: var(--paper); color: var(--ink);
-    font-family: Georgia, "Times New Roman", Times, serif; line-height: 1.5;
-    -webkit-font-smoothing: antialiased; }
-  .sheet { max-width: 44rem; margin: 0 auto; padding: 2.4rem 1.4rem 4rem; }
-  .smallcaps { text-transform: uppercase; letter-spacing: 0.13em; font-size: 0.72rem; color: var(--ink-soft); }
+{% extends "_shell.html.j2" %}
+{% block title %}Mimi — build a report{% endblock %}
 
-  header.masthead { text-align: center; border-bottom: 4px double var(--rule-ink);
-    padding-bottom: 1.1rem; margin-bottom: 0; }
-  header.masthead h1 { margin: 0 0 0.3rem; font-size: 2.3rem; font-weight: 700; }
-  header.masthead p { margin: 0; font-style: italic; color: var(--ink-faint); }
-
-  /* Newspaper-style section nav: New report on the left, saved reports as
-     hoverable sections. */
-  .section-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 1.25rem;
-    padding: 0.45rem 0; border-bottom: 1px solid var(--rule); margin-bottom: 1.7rem; }
-  .new-report-btn { font-family: Georgia, serif; font-size: 0.72rem; text-transform: uppercase;
-    letter-spacing: 0.1em; font-weight: 700; color: var(--paper); background: var(--accent);
-    padding: 0.45em 0.9em; border-radius: 3px; text-decoration: none; white-space: nowrap; }
-  .new-report-btn:hover { background: #000; }
-  .nav-empty { font-style: italic; font-size: 0.8rem; color: var(--ink-faint); }
-  .nav-section { position: relative; }
-  .nav-section > .nav-section-name { display: inline-block; font-family: Georgia, serif;
-    text-transform: uppercase; letter-spacing: 0.09em; font-size: 0.75rem; color: var(--ink);
-    padding: 0.35rem 0.1rem; cursor: default; border-bottom: 2px solid transparent; }
-  .nav-section:hover > .nav-section-name, .nav-section:focus-within > .nav-section-name {
-    border-bottom-color: var(--rule-ink); }
-  .nav-dropdown { position: absolute; top: 100%; left: 0; z-index: 5; min-width: 8rem;
-    background: var(--field); border: 1px solid var(--rule); border-radius: 3px;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.09); padding: 0.25rem 0; display: none; }
-  .nav-section:hover > .nav-dropdown, .nav-section:focus-within > .nav-dropdown { display: block; }
-  .nav-dropdown a, .nav-dropdown button { display: block; width: 100%; text-align: left;
-    font-family: Georgia, serif; font-size: 0.88rem; color: var(--ink); background: none; border: none;
-    padding: 0.4rem 0.9rem; text-decoration: none; cursor: pointer; }
-  .nav-dropdown a:hover, .nav-dropdown button:hover { background: var(--note-bg); }
-  .nav-dropdown form { margin: 0; }
-
-  /* Info button + modal */
-  .info-btn { font-family: Georgia, serif; font-size: 0.72rem; text-transform: uppercase;
-    letter-spacing: 0.1em; font-weight: 700; color: var(--ink); background: none;
-    border: 1px solid var(--rule-ink); padding: 0.4em 0.85em; border-radius: 3px; cursor: pointer; white-space: nowrap; }
-  .info-btn:hover { background: var(--note-bg); }
-  #info-modal { display: none; position: fixed; inset: 0; z-index: 30; background: rgba(26,26,26,0.42);
-    padding: 2rem 1rem; overflow-y: auto; }
-  #info-modal.open { display: flex; align-items: flex-start; justify-content: center; }
-  .info-panel { background: var(--paper); max-width: 40rem; width: 100%; margin: auto; border-radius: 5px;
-    box-shadow: 0 12px 44px rgba(0,0,0,0.28); padding: 1.5rem 1.6rem 1.8rem; }
-  .info-head { display: flex; align-items: baseline; justify-content: space-between;
-    border-bottom: 2px solid var(--rule-ink); padding-bottom: 0.6rem; margin-bottom: 1.2rem; }
-  .info-head h2 { margin: 0; font-size: 1.5rem; }
-  .info-close { font-family: Georgia, serif; font-size: 1.7rem; line-height: 1; color: var(--ink-soft);
-    background: none; border: none; cursor: pointer; padding: 0 0.2rem; }
-  .info-close:hover { color: var(--ink); }
-  .info-box { background: var(--note-bg); border-radius: 3px; padding: 0.9rem 1.15rem; margin-bottom: 1.1rem; }
-  .info-box:last-child { margin-bottom: 0; }
-  .info-box h3 { margin: 0 0 0.5rem; font-size: 1.02rem; }
-  .info-box ul { margin: 0; padding-left: 1.1rem; }
-  .info-box li, .info-box p { font-size: 0.85rem; color: var(--ink-soft); line-height: 1.55; margin: 0.35rem 0; }
-  .info-box p:first-child { margin-top: 0; }
-  .info-box p:last-child { margin-bottom: 0; }
-  .info-box strong { color: var(--ink); }
-  .info-box code { font-style: normal; font-size: 0.8rem; }
-
+{% block extra_css %}
   .banner { border-radius: 2px; padding: 0.7rem 1rem; margin-bottom: 1.4rem; }
   .banner.error { background: var(--error-bg); border: 1px solid var(--error-border); color: var(--error-ink); }
-  .banner.ok { background: var(--ok-bg); border: 1px solid var(--ok-border); color: #2f5227; }
 
   /* Report name + top actions */
   .report-bar { border-bottom: 1px solid var(--rule); padding-bottom: 1.5rem; margin-bottom: 1.7rem; }
@@ -128,7 +54,8 @@
     margin-bottom: 1.6rem; }
   .add-card:hover { border-color: var(--ink-soft); color: var(--ink); }
 
-  .actions { border-top: 1px solid var(--rule); padding-top: 1.5rem; }
+  /* Generate button, centered. */
+  .actions { border-top: 1px solid var(--rule); padding-top: 1.5rem; text-align: center; }
   button.generate { font-family: Georgia, serif; font-size: 1.05rem; color: var(--paper);
     background: var(--accent); border: none; border-radius: 3px; padding: 0.7em 1.8em; cursor: pointer; }
   button.generate:hover { background: #000; }
@@ -140,7 +67,7 @@
     text-align: center; line-height: 1.6; }
   .footnote code { font-style: normal; font-size: 0.76rem; }
 
-  #overlay { display: none; position: fixed; inset: 0; background: rgba(251,250,247,0.94); z-index: 20;
+  #overlay { display: none; position: fixed; inset: 0; background: rgba(251,250,247,0.94); z-index: 50;
     flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2rem; }
   #overlay h2 { font-size: 1.6rem; margin: 0 0 0.6rem; }
   #overlay p { color: var(--ink-soft); font-style: italic; max-width: 26rem; }
@@ -149,36 +76,9 @@
   @keyframes spin { to { transform: rotate(360deg); } }
 
   @media (max-width: 34rem) { .checks { grid-template-columns: 1fr; } .radios { flex-direction: column; gap: 0.5rem; } }
-</style>
-</head>
-<body>
-<div class="sheet">
+{% endblock %}
 
-  <header class="masthead">
-    <h1>Mimi, the media monitoring tool</h1>
-    <p>An open-source project for building reports on US and UK headlines.</p>
-    <p>Developed by Ziad Ramley.</p>
-  </header>
-
-  <nav class="section-nav">
-    <button type="button" class="info-btn" onclick="openInfo()">Info</button>
-    <a class="new-report-btn" href="/?new=1" onclick="return confirmNew();">New report</a>
-    {% for s in saved_searches %}
-    <div class="nav-section" tabindex="0">
-      <span class="nav-section-name">{{ s.name }}</span>
-      <div class="nav-dropdown">
-        <a href="/run/{{ s.slug }}">Run</a>
-        <a href="/edit/{{ s.slug }}">Edit</a>
-        <form class="delete-form" method="post" action="/delete/{{ s.slug }}" data-name="{{ s.name }}">
-          <button type="submit">Delete</button>
-        </form>
-      </div>
-    </div>
-    {% endfor %}
-    {% if not saved_searches %}<span class="nav-empty">Saved reports will appear here.</span>{% endif %}
-  </nav>
-
-  {% if flash %}<div class="banner ok">{{ flash }}</div>{% endif %}
+{% block content %}
   {% if top_error %}<div class="banner error">{{ top_error }}</div>{% endif %}
 
   {% set default_range = date_ranges[0][0] %}
@@ -259,57 +159,27 @@
   </form>
 
   <p class="footnote">
-    Mini runs entirely on your machine so your data stays with you. Only the outlets’ RSS feeds are contacted.<br>
+    Mimi runs entirely on your machine so your data stays with you. Only the outlets’ RSS feeds are contacted.<br>
     Saved reports live in the <code>searches/</code> folder and also work from the command line:
     <code>python monitor.py --config searches/your-report.yaml</code>
   </p>
 
-</div>
+  <!-- Template for a fresh query card, cloned by "Add a new query". -->
+  <template id="card-template">
+    {{ render_card({'token': '__TOKEN__', 'name': '', 'keywords': '', 'match': 'any',
+                    'date_range': default_range, 'selected': all_pub_ids, 'error': none}) }}
+  </template>
+{% endblock %}
 
-<!-- Template for a fresh query card, cloned by "Add a new query". -->
-<template id="card-template">
-  {{ render_card({'token': '__TOKEN__', 'name': '', 'keywords': '', 'match': 'any',
-                  'date_range': default_range, 'selected': all_pub_ids, 'error': none}) }}
-</template>
-
-<div id="info-modal" role="dialog" aria-modal="true" aria-labelledby="info-title">
-  <div class="info-panel">
-    <div class="info-head">
-      <h2 id="info-title">About Mimi</h2>
-      <button type="button" class="info-close" onclick="closeInfo()" aria-label="Close">&times;</button>
-    </div>
-
-    <div class="info-box">
-      <h3>How to use Mimi</h3>
-      <ul>
-        <li><strong>How it works:</strong> Mimi pulls headlines via RSS from a network of US and UK news outlets.</li>
-        <li><strong>Building reports:</strong> Reports are made up of queries. You can have a single query or consolidate multiple into one report.</li>
-        <li><strong>Saving reports:</strong> Save a report to run it again without re-entering details.</li>
-      </ul>
-    </div>
-
-    <div class="info-box">
-      <h3>Terms of use</h3>
-      <p>Mimi is free, open-source software provided under the MIT License, “as is” and without warranty of any kind.</p>
-      <p>Mimi collects only what outlets publish in their public RSS feeds — headlines, summaries, bylines, timestamps, and links. That content belongs to the publishers and remains subject to each publisher’s own terms. Mimi does not access or store full article text; read full articles through your own subscriptions.</p>
-      <p>You are responsible for using Mimi in line with the terms of the outlets you monitor, and for how you use the reports it produces.</p>
-    </div>
-
-    <div class="info-box">
-      <h3>Privacy policy</h3>
-      <p>Mimi runs entirely on your own machine. There is no account, no server, and no analytics or tracking.</p>
-      <p>The only network requests Mimi makes are to fetch the public RSS feeds you have chosen, directly from the publishers. Nothing you type — your queries, report names, or saved reports — is ever sent anywhere.</p>
-      <p>Saved reports and generated reports are stored as ordinary files on your computer, in the <code>searches/</code> and <code>reports/</code> folders. They stay there until you delete them.</p>
-    </div>
-  </div>
-</div>
-
+{% block overlay %}
 <div id="overlay">
   <div class="spinner"></div>
   <h2>Building your report…</h2>
   <p>Fetching the latest headlines. This usually takes a few seconds.</p>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
   var cardsEl = document.getElementById("cards");
 
@@ -355,30 +225,6 @@
     document.getElementById("overlay").style.display = "flex";
   }
 
-  function confirmNew() {
-    return confirm("Clear everything and start a new report? Anything you haven’t saved will be lost.");
-  }
-
-  // Info modal (how-to, terms, privacy).
-  function openInfo() { document.getElementById("info-modal").classList.add("open"); }
-  function closeInfo() { document.getElementById("info-modal").classList.remove("open"); }
-  document.getElementById("info-modal").addEventListener("click", function (e) {
-    if (e.target === this) closeInfo();  // click on the backdrop closes
-  });
-  document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape") closeInfo();
-  });
-
-  // Confirm deletes. The name is read from a data- attribute (a safe HTML
-  // attribute context) rather than interpolated into inline JS — so a
-  // saved report named with quotes or script can't execute here.
-  document.querySelectorAll(".delete-form").forEach(function (form) {
-    form.addEventListener("submit", function (e) {
-      var name = form.dataset.name || "this report";
-      if (!confirm("Delete the saved report “" + name + "”?")) e.preventDefault();
-    });
-  });
-
   // Record the visual order of queries so the server rebuilds sections in order.
   document.getElementById("search-form").addEventListener("submit", function () {
     var tokens = [];
@@ -386,17 +232,6 @@
     document.getElementById("card_order").value = tokens.join(",");
   });
 
-  // Auto-dismiss the "Saved …" confirmation after 5 seconds.
-  var okBanner = document.querySelector(".banner.ok");
-  if (okBanner) {
-    setTimeout(function () {
-      okBanner.style.transition = "opacity 0.6s";
-      okBanner.style.opacity = "0";
-      setTimeout(function () { okBanner.remove(); }, 600);
-    }, 5000);
-  }
-
   renumber();
 </script>
-</body>
-</html>
+{% endblock %}

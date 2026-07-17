@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Media Monitoring — {{ generated_day }}</title>
+<title>{{ report_name }} — {{ generated_day }}</title>
+{% from "_report_sections.html.j2" import render_sections %}
 <style>
   :root {
     --ink: #1a1a1a;
@@ -162,17 +163,19 @@
   </div>
 
   <header class="masthead">
-    <h1>Media Monitoring</h1>
+    <h1>{{ report_name }}</h1>
     <p class="dateline smallcaps">Generated {{ generated_day }} at {{ generated_at.strftime("%H:%M") }}</p>
-    <p class="counts">{{ total_articles }} article{{ "s" if total_articles != 1 }} across {{ sections|length }} search{{ "es" if sections|length != 1 }}</p>
+    <p class="counts">{{ publications }} publication{{ "s" if publications != 1 }} · {{ total_articles }} result{{ "s" if total_articles != 1 }}</p>
   </header>
 
+  {% if sections|length > 1 %}
   <nav class="toc smallcaps">
     {%- for section in sections %}
     <a href="#{{ section.anchor }}">{{ section.name }} <span class="n">({{ section.articles|length }})</span></a>
     {%- if not loop.last %}<span class="sep">·</span>{% endif %}
     {%- endfor %}
   </nav>
+  {% endif %}
 
   {% if failed_feeds %}
   <div class="warnings">
@@ -185,38 +188,7 @@
   </div>
   {% endif %}
 
-  {% for section in sections %}
-  <section class="query" id="{{ section.anchor }}">
-    <header>
-      <h2>{{ section.name }}
-        <span class="count">— {{ section.articles|length }} match{{ "es" if section.articles|length != 1 }}, {{ section.range_label }}</span>
-      </h2>
-      <p class="query-meta">
-        Keywords ({{ section.match }}):
-        {%- for k in section.keywords %} “{{ k }}”{% if not loop.last %},{% endif %}{% endfor %}
-      </p>
-      {% if section.show_depth_note %}
-      <p class="depth-note">RSS feeds hold a limited number of recent items and their depth varies by outlet — over a {{ section.range_label }} window, older articles may be missing from busier feeds.</p>
-      {% endif %}
-    </header>
-
-    {% if section.articles %}
-      {% for a in section.articles %}
-      <article class="entry">
-        <h3 class="headline"><a href="{{ a.url }}" target="_blank" rel="noopener">{{ a.title }}</a></h3>
-        <p class="meta smallcaps">
-          <span class="outlet">{{ a.publication_name }}</span>
-          {%- if a.author %} · {{ a.author }}{% endif %}
-          · <time>{{ a.published|datefmt }}</time>
-        </p>
-        {% if a.standfirst %}<p class="standfirst">{{ a.standfirst }}</p>{% endif %}
-      </article>
-      {% endfor %}
-    {% else %}
-      <p class="empty">No matching articles found.</p>
-    {% endif %}
-  </section>
-  {% endfor %}
+  {{ render_sections(sections) }}
 
   <footer class="colophon">
     <p>Generated locally from publisher RSS feeds. Headlines link to the publisher’s own site.</p>

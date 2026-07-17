@@ -8,12 +8,17 @@ and serves (or saves) the result.
 Routes:
     GET  /                       the editor + saved-search list
     GET  /?new=1                 the editor, reset to one blank card
+    GET  /report                 the in-app view of the last generated report
     GET  /edit/<slug>            load a saved search into the editor
     POST /generate               build a report from the submitted cards
     POST /save                   save the submitted cards under a name
     GET  /run/<slug>             run a saved search straight to a report
     POST /delete/<slug>          delete a saved search
-    GET  /reports/<file>.html    serve a generated report (+ an edit toolbar)
+    GET  /reports/<file>.html    serve the self-contained portable report file
+
+The editor and the report view share one page shell (templates/_shell.html.j2)
+so the masthead + action nav are identical across both. The report file served
+at /reports/ stays self-contained for download/print/email and the CLI.
 
 The server binds to localhost only (see create_server) — it is never
 reachable from your network.
@@ -38,6 +43,7 @@ from monitoring.constants import (
 )
 from monitoring.models import Publication, Query
 from monitoring.pipeline import generate_report
+from monitoring.report import build_markdown, format_datetime, format_day
 from monitoring.searches import (
     delete_search,
     list_searches,
@@ -68,17 +74,14 @@ _REGION_ORDER = ["UK", "US"]
 
 _DEFAULT_RANGE = next(iter(DATE_RANGES))
 
-# The report template opens its body with this exact tag; the panel
-# splices a screen-only edit toolbar in right after it, without ever
-# touching the saved file on disk.
-_BODY_MARKER = "<body>"
-
 
 def _jinja() -> Environment:
-    return Environment(
+    env = Environment(
         loader=FileSystemLoader(_TEMPLATES_DIR),
         autoescape=select_autoescape(enabled_extensions=("html", "j2")),
     )
+    env.filters["datefmt"] = format_datetime  # used by the shared sections macro
+    return env
 
 
 def _date_range_options() -> list[tuple[str, str]]:
@@ -203,32 +206,6 @@ def default_cards(publications: dict[str, Publication]) -> list[dict]:
     }]
 
 
-def inject_panel_toolbar(html: str) -> str:
-    """Splice a screen-only 'edit this search' bar in after <body>. Used
-    only when the panel serves a report — the file on disk is untouched."""
-    marker = html.find(_BODY_MARKER)
-    if marker == -1:
-        return html
-    at = marker + len(_BODY_MARKER)
-    bar = (
-        '<div class="mm-panel-bar">'
-        '<a href="/">← Edit this report</a>'
-        '<span>·</span>'
-        '<a href="/?new=1">New report</a>'
-        '</div>'
-        '<style>'
-        '.mm-panel-bar{font-family:Georgia,serif;font-size:.8rem;'
-        'letter-spacing:.04em;text-align:center;padding:.55rem 1rem;'
-        'background:#f4f1ea;border-bottom:1px solid #ddd9d0;color:#4a4a4a}'
-        '.mm-panel-bar a{color:#1a1a1a;text-decoration:none;margin:0 .4rem}'
-        '.mm-panel-bar a:hover{text-decoration:underline}'
-        '.mm-panel-bar span{color:#bcb6a8}'
-        '@media print{.mm-panel-bar{display:none}}'
-        '</style>'
-    )
-    return html[:at] + bar + html[at:]
-
-
 def make_handler(
     publications: dict[str, Publication],
     reports_dir: str | Path = REPORTS_DIR,
@@ -240,8 +217,10 @@ def make_handler(
 
     # In-memory recollection of the last search the user ran or loaded, so
     # returning to the editor restores it. Single-user localhost tool — a
-    # plain dict is plenty. `flash` is a one-shot confirmation message.
-    state: dict = {"cards": None, "search_name": "", "flash": None}
+    # plain dict is plenty. `flash` is a one-shot confirmation message;
+    # `report` holds the last generated report so GET /report can re-render
+    # it (post/redirect/get) without re-fetching.
+    state: dict = {"cards": None, "search_name": "", "flash": None, "report": None}
 
     class ControlPanelHandler(BaseHTTPRequestHandler):
         server_version = "MediaMonitor/1.0"
@@ -278,6 +257,8 @@ def make_handler(
             path = parsed.path
             if path == "/":
                 self._home(parse_qs(parsed.query))
+            elif path == "/report":
+                self._report()
             elif path.startswith("/edit/"):
                 self._edit_saved(unquote(path[len("/edit/"):]))
             elif path.startswith("/run/"):
@@ -298,25 +279,62 @@ def make_handler(
             else:
                 self._send_html("<h1>Not found</h1>", status=404)
 
+        # --- shared context --------------------------------------------
+        def _saved(self) -> list:
+            try:
+                return list_searches(publications, searches_dir)
+            except Exception:  # a storage hiccup shouldn't blank the panel
+                log.error("Could not list saved searches:\n%s", traceback.format_exc())
+                return []
+
+        def _stash_report(self, name: str, result) -> None:
+            """Remember the last report so GET /report can re-render it."""
+            state["report"] = {
+                "name": name,
+                "file": result.path.name,
+                "result": result,
+                "markdown": build_markdown(result.sections, result.failed,
+                                           result.generated_at, name, result.publications),
+                "markdown_filename": result.path.name.replace(".html", ".md"),
+            }
+
         # --- rendering the editor --------------------------------------
         def _render_editor(self, cards: list[dict], search_name: str, status: int,
                            top_error: str | None = None, flash: str | None = None) -> None:
-            try:
-                saved = list_searches(publications, searches_dir)
-            except Exception:  # a storage hiccup shouldn't blank the panel
-                log.error("Could not list saved searches:\n%s", traceback.format_exc())
-                saved = []
             html = _jinja().get_template("control_panel.html.j2").render(
                 cards=cards,
                 grouped_publications=_grouped_publications(publications),
                 date_ranges=_date_range_options(),
                 all_pub_ids=set(publications),
-                saved_searches=saved,
+                saved_searches=self._saved(),
                 search_name=search_name,
                 top_error=top_error,
                 flash=flash,
             )
             self._send_html(html, status=status)
+
+        # --- rendering the in-app report view --------------------------
+        def _report(self) -> None:
+            rep = state.get("report")
+            if not rep:  # nothing generated yet (fresh server / direct hit)
+                self._redirect("/")
+                return
+            result = rep["result"]
+            html = _jinja().get_template("report_view.html.j2").render(
+                saved_searches=self._saved(),
+                flash=None,
+                report_name=rep["name"],
+                report_file=rep["file"],
+                sections=result.sections,
+                failed_feeds=result.failed,
+                generated_at=result.generated_at,
+                generated_day=format_day(result.generated_at),
+                total_articles=result.total_articles,
+                publications=result.publications,
+                markdown_payload=rep["markdown"],
+                markdown_filename=rep["markdown_filename"],
+            )
+            self._send_html(html, status=200)
 
         def _home(self, query: dict[str, list[str]]) -> None:
             if "new" in query:
@@ -362,7 +380,8 @@ def make_handler(
             state["search_name"] = search_name
             log.info("Generating report %r from %d query(ies).", search_name, len(queries))
             try:
-                result = generate_report(queries, publications, reports_dir=reports_path)
+                result = generate_report(queries, publications, reports_dir=reports_path,
+                                         report_name=search_name)
             except Exception:
                 log.error("Report generation failed:\n%s", traceback.format_exc())
                 self._send_html(
@@ -372,7 +391,8 @@ def make_handler(
                     status=500,
                 )
                 return
-            self._redirect(f"/reports/{result.path.name}")
+            self._stash_report(search_name, result)
+            self._redirect("/report")
 
         def _save(self) -> None:
             # Saving only needs a name — the searches can be empty or
@@ -433,7 +453,8 @@ def make_handler(
                 return
             log.info("Running saved search %r.", search.name)
             try:
-                result = generate_report(search.queries, publications, reports_dir=reports_path)
+                result = generate_report(search.queries, publications, reports_dir=reports_path,
+                                         report_name=search.name)
             except Exception:
                 log.error("Report generation failed:\n%s", traceback.format_exc())
                 self._send_html(
@@ -442,7 +463,8 @@ def make_handler(
                     status=500,
                 )
                 return
-            self._redirect(f"/reports/{result.path.name}")
+            self._stash_report(search.name, result)
+            self._redirect("/report")
 
         def _delete_saved(self, slug: str) -> None:
             try:
@@ -461,7 +483,7 @@ def make_handler(
                 self._send_html("<h1>Report not found</h1>", status=404)
                 return
             try:
-                html = inject_panel_toolbar(path.read_text(encoding="utf-8"))
+                html = path.read_text(encoding="utf-8")
             except OSError:  # deleted or unreadable between the check and the read
                 self._send_html("<h1>Report not found</h1>", status=404)
                 return

@@ -71,13 +71,18 @@ def build_markdown(
     sections: list[ReportSection],
     failed_feeds: list[FeedFetchResult],
     generated_at: datetime,
+    report_name: str | None = None,
+    publications: int = 0,
 ) -> str:
     total = sum(len(s.articles) for s in sections)
+    meta = f"Generated {format_day(generated_at)} at {generated_at.strftime('%H:%M')}"
+    if publications:
+        meta += f" · {publications} publication{'s' if publications != 1 else ''}"
+    meta += f" · {total} result{'s' if total != 1 else ''}"
     lines: list[str] = [
-        "# Media Monitoring Report",
+        f"# {report_name or 'Media Monitoring'}",
         "",
-        f"Generated {format_day(generated_at)} at {generated_at.strftime('%H:%M')} — "
-        f"{total} article{'s' if total != 1 else ''}",
+        meta,
         "",
     ]
     for section in sections:
@@ -118,6 +123,8 @@ def render_html(
     sections: list[ReportSection],
     failed_feeds: list[FeedFetchResult],
     generated_at: datetime,
+    report_name: str | None = None,
+    publications: int = 0,
 ) -> str:
     env = Environment(
         loader=FileSystemLoader(_TEMPLATES_DIR),
@@ -131,7 +138,9 @@ def render_html(
         generated_at=generated_at,
         generated_day=format_day(generated_at),
         total_articles=sum(len(s.articles) for s in sections),
-        markdown_payload=build_markdown(sections, failed_feeds, generated_at),
+        report_name=report_name or "Media Monitoring",
+        publications=publications,
+        markdown_payload=build_markdown(sections, failed_feeds, generated_at, report_name, publications),
         markdown_filename=markdown_filename,
     )
 

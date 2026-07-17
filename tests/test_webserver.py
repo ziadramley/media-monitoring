@@ -12,7 +12,6 @@ from monitoring.webserver import (
     _grouped_publications,
     build_cards,
     cards_from_queries,
-    inject_panel_toolbar,
     parse_cards,
 )
 from monitoring.models import Query
@@ -128,16 +127,38 @@ class CardsFromQueries(unittest.TestCase):
         self.assertEqual(card["match"], "all")
 
 
-class ToolbarInjection(unittest.TestCase):
-    def test_bar_inserted_after_body(self):
-        out = inject_panel_toolbar("<html><body><h1>R</h1></body></html>")
-        self.assertIn("mm-panel-bar", out)
-        self.assertLess(out.index("<body>"), out.index("mm-panel-bar"))
-        self.assertIn("<h1>R</h1>", out)
+class ReportNameThreading(unittest.TestCase):
+    """The report name and publications count reach the portable file."""
 
-    def test_no_body_leaves_html_untouched(self):
-        html = "<div>no body here</div>"
-        self.assertEqual(inject_panel_toolbar(html), html)
+    def _render(self, **over):
+        from datetime import datetime, timezone
+        from monitoring.report import ReportSection, render_html
+        from monitoring.models import Article
+        now = datetime(2026, 7, 17, 16, 28, tzinfo=timezone.utc)
+        art = Article(title="H", url="https://x/a", dedupe_key="k", publication_id="bbc",
+                      publication_name="BBC News", author=None, published=now, standfirst=None)
+        secs = [
+            ReportSection("Alpha", "q1", [art], "past 24 hours", False, ["a"], "any"),
+            ReportSection("Beta", "q2", [], "past 24 hours", False, ["b"], "any"),
+        ]
+        kw = {"report_name": "My Report", "publications": 3}
+        kw.update(over)
+        return render_html(secs, [], now, **kw)
+
+    def test_name_and_metadata_present(self):
+        html = self._render()
+        self.assertIn("<h1>My Report</h1>", html)
+        self.assertIn("3 publications", html)
+        self.assertIn("1 result", html)
+
+    def test_toc_only_with_multiple_sections(self):
+        self.assertIn('class="toc', self._render())            # 2 sections
+        from datetime import datetime, timezone
+        from monitoring.report import ReportSection, render_html
+        one = [ReportSection("Solo", "q1", [], "past 24 hours", False, ["a"], "any")]
+        html = render_html(one, [], datetime(2026, 7, 17, tzinfo=timezone.utc),
+                           report_name="Solo", publications=1)
+        self.assertNotIn('class="toc', html)
 
 
 if __name__ == "__main__":

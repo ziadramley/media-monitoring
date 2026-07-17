@@ -201,8 +201,11 @@ monitoring/pipeline.py      the shared fetch → filter → render engine both e
 monitoring/report.py        renders the report and its Markdown twin
 monitoring/webserver.py     the control panel's HTTP layer (form, generate, serve)
 monitoring/searches.py      saving/loading named searches (path-safe file storage)
-templates/report.html.j2    the report's entire appearance
-templates/control_panel.html.j2  the control panel form
+templates/_shell.html.j2    shared page shell (masthead + action nav) for the app
+templates/control_panel.html.j2  the report editor (extends the shell)
+templates/report_view.html.j2    the in-app report view (extends the shell)
+templates/_report_sections.html.j2  shared article markup for both report surfaces
+templates/report.html.j2    the self-contained, downloadable/printable report file
 ```
 
 Run the tests with `.venv/bin/python -m unittest`.
