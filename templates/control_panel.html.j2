@@ -49,11 +49,31 @@
   .nav-dropdown a:hover, .nav-dropdown button:hover { background: var(--note-bg); }
   .nav-dropdown form { margin: 0; }
 
-  /* How-to */
-  .howto { background: var(--note-bg); border-radius: 3px; padding: 0.8rem 1.15rem; margin-bottom: 1.8rem; }
-  .howto ul { margin: 0; padding-left: 1.1rem; }
-  .howto li { font-size: 0.85rem; color: var(--ink-soft); margin: 0.28rem 0; line-height: 1.5; }
-  .howto strong { color: var(--ink); }
+  /* Info button + modal */
+  .info-btn { font-family: Georgia, serif; font-size: 0.72rem; text-transform: uppercase;
+    letter-spacing: 0.1em; font-weight: 700; color: var(--ink); background: none;
+    border: 1px solid var(--rule-ink); padding: 0.4em 0.85em; border-radius: 3px; cursor: pointer; white-space: nowrap; }
+  .info-btn:hover { background: var(--note-bg); }
+  #info-modal { display: none; position: fixed; inset: 0; z-index: 30; background: rgba(26,26,26,0.42);
+    padding: 2rem 1rem; overflow-y: auto; }
+  #info-modal.open { display: flex; align-items: flex-start; justify-content: center; }
+  .info-panel { background: var(--paper); max-width: 40rem; width: 100%; margin: auto; border-radius: 5px;
+    box-shadow: 0 12px 44px rgba(0,0,0,0.28); padding: 1.5rem 1.6rem 1.8rem; }
+  .info-head { display: flex; align-items: baseline; justify-content: space-between;
+    border-bottom: 2px solid var(--rule-ink); padding-bottom: 0.6rem; margin-bottom: 1.2rem; }
+  .info-head h2 { margin: 0; font-size: 1.5rem; }
+  .info-close { font-family: Georgia, serif; font-size: 1.7rem; line-height: 1; color: var(--ink-soft);
+    background: none; border: none; cursor: pointer; padding: 0 0.2rem; }
+  .info-close:hover { color: var(--ink); }
+  .info-box { background: var(--note-bg); border-radius: 3px; padding: 0.9rem 1.15rem; margin-bottom: 1.1rem; }
+  .info-box:last-child { margin-bottom: 0; }
+  .info-box h3 { margin: 0 0 0.5rem; font-size: 1.02rem; }
+  .info-box ul { margin: 0; padding-left: 1.1rem; }
+  .info-box li, .info-box p { font-size: 0.85rem; color: var(--ink-soft); line-height: 1.55; margin: 0.35rem 0; }
+  .info-box p:first-child { margin-top: 0; }
+  .info-box p:last-child { margin-bottom: 0; }
+  .info-box strong { color: var(--ink); }
+  .info-box code { font-style: normal; font-size: 0.8rem; }
 
   .banner { border-radius: 2px; padding: 0.7rem 1rem; margin-bottom: 1.4rem; }
   .banner.error { background: var(--error-bg); border: 1px solid var(--error-border); color: var(--error-ink); }
@@ -135,11 +155,13 @@
 <div class="sheet">
 
   <header class="masthead">
-    <h1>Mimi</h1>
-    <p>A media monitoring tool for building reports on US and UK headlines</p>
+    <h1>Mimi, the media monitoring tool</h1>
+    <p>An open-source project for building reports on US and UK headlines.</p>
+    <p>Developed by Ziad Ramley.</p>
   </header>
 
   <nav class="section-nav">
+    <button type="button" class="info-btn" onclick="openInfo()">Info</button>
     <a class="new-report-btn" href="/?new=1" onclick="return confirmNew();">New report</a>
     {% for s in saved_searches %}
     <div class="nav-section" tabindex="0">
@@ -155,14 +177,6 @@
     {% endfor %}
     {% if not saved_searches %}<span class="nav-empty">Saved reports will appear here.</span>{% endif %}
   </nav>
-
-  <section class="howto">
-    <ul>
-      <li><strong>How it works:</strong> Mimi pulls headlines via RSS from a network of US and UK news outlets.</li>
-      <li><strong>Building reports:</strong> Reports are made up of queries. You can have a single query or consolidate multiple into one report.</li>
-      <li><strong>Saving reports:</strong> Save a report to run it again without re-entering details.</li>
-    </ul>
-  </section>
 
   {% if flash %}<div class="banner ok">{{ flash }}</div>{% endif %}
   {% if top_error %}<div class="banner error">{{ top_error }}</div>{% endif %}
@@ -258,6 +272,38 @@
                   'date_range': default_range, 'selected': all_pub_ids, 'error': none}) }}
 </template>
 
+<div id="info-modal" role="dialog" aria-modal="true" aria-labelledby="info-title">
+  <div class="info-panel">
+    <div class="info-head">
+      <h2 id="info-title">About Mimi</h2>
+      <button type="button" class="info-close" onclick="closeInfo()" aria-label="Close">&times;</button>
+    </div>
+
+    <div class="info-box">
+      <h3>How to use Mimi</h3>
+      <ul>
+        <li><strong>How it works:</strong> Mimi pulls headlines via RSS from a network of US and UK news outlets.</li>
+        <li><strong>Building reports:</strong> Reports are made up of queries. You can have a single query or consolidate multiple into one report.</li>
+        <li><strong>Saving reports:</strong> Save a report to run it again without re-entering details.</li>
+      </ul>
+    </div>
+
+    <div class="info-box">
+      <h3>Terms of use</h3>
+      <p>Mimi is free, open-source software provided under the MIT License, “as is” and without warranty of any kind.</p>
+      <p>Mimi collects only what outlets publish in their public RSS feeds — headlines, summaries, bylines, timestamps, and links. That content belongs to the publishers and remains subject to each publisher’s own terms. Mimi does not access or store full article text; read full articles through your own subscriptions.</p>
+      <p>You are responsible for using Mimi in line with the terms of the outlets you monitor, and for how you use the reports it produces.</p>
+    </div>
+
+    <div class="info-box">
+      <h3>Privacy policy</h3>
+      <p>Mimi runs entirely on your own machine. There is no account, no server, and no analytics or tracking.</p>
+      <p>The only network requests Mimi makes are to fetch the public RSS feeds you have chosen, directly from the publishers. Nothing you type — your queries, report names, or saved reports — is ever sent anywhere.</p>
+      <p>Saved reports and generated reports are stored as ordinary files on your computer, in the <code>searches/</code> and <code>reports/</code> folders. They stay there until you delete them.</p>
+    </div>
+  </div>
+</div>
+
 <div id="overlay">
   <div class="spinner"></div>
   <h2>Building your report…</h2>
@@ -312,6 +358,16 @@
   function confirmNew() {
     return confirm("Clear everything and start a new report? Anything you haven’t saved will be lost.");
   }
+
+  // Info modal (how-to, terms, privacy).
+  function openInfo() { document.getElementById("info-modal").classList.add("open"); }
+  function closeInfo() { document.getElementById("info-modal").classList.remove("open"); }
+  document.getElementById("info-modal").addEventListener("click", function (e) {
+    if (e.target === this) closeInfo();  // click on the backdrop closes
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") closeInfo();
+  });
 
   // Confirm deletes. The name is read from a data- attribute (a safe HTML
   // attribute context) rather than interpolated into inline JS — so a
