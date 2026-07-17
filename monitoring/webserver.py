@@ -42,6 +42,7 @@ from monitoring.searches import (
     delete_search,
     list_searches,
     load_search,
+    next_untitled_name,
     save_search,
     slugify,
 )
@@ -211,9 +212,9 @@ def inject_panel_toolbar(html: str) -> str:
     at = marker + len(_BODY_MARKER)
     bar = (
         '<div class="mm-panel-bar">'
-        '<a href="/">← Edit this search</a>'
+        '<a href="/">← Edit this report</a>'
         '<span>·</span>'
-        '<a href="/?new=1">New search</a>'
+        '<a href="/?new=1">New report</a>'
         '</div>'
         '<style>'
         '.mm-panel-bar{font-family:Georgia,serif;font-size:.8rem;'
@@ -345,12 +346,21 @@ def make_handler(
             if not ok:
                 self._render_editor(
                     view or default_cards(publications), search_name, status=400,
-                    top_error="Please fix the highlighted search(es) before generating.",
+                    top_error="Please fix the highlighted queries before generating.",
                 )
                 return
-            state["cards"] = view
+            # Generating always saves the report. An unnamed report is saved
+            # under an auto-assigned "Untitled Report N".
+            if not slugify(search_name):
+                search_name = next_untitled_name(searches_dir)
+            try:
+                save_search(search_name, queries, searches_dir)
+            except (ValueError, OSError):
+                log.error("Could not save report on generate:\n%s", traceback.format_exc())
+                # Saving is best-effort here — still produce the report.
+            state["cards"] = [{**c, "error": None} for c in view]
             state["search_name"] = search_name
-            log.info("Generating report from %d search(es).", len(queries))
+            log.info("Generating report %r from %d query(ies).", search_name, len(queries))
             try:
                 result = generate_report(queries, publications, reports_dir=reports_path)
             except Exception:
@@ -392,13 +402,13 @@ def make_handler(
             incomplete = sum(1 for c in view if c["error"] and c["keywords"].strip())
             n = len(queries)
             if n == 0 and incomplete == 0:
-                flash = f'Saved “{search_name}” as an empty draft — add searches and save again.'
+                flash = f'Saved “{search_name}” as an empty draft — add queries and save again.'
             else:
-                flash = f'Saved “{search_name}” ({n} search{"es" if n != 1 else ""}).'
+                flash = f'Saved “{search_name}” ({n} quer{"ies" if n != 1 else "y"}).'
                 if incomplete:
-                    flash += (f' {incomplete} card{"s" if incomplete != 1 else ""} with no '
+                    flash += (f' {incomplete} quer{"ies" if incomplete != 1 else "y"} with no '
                               f'publication selected {"were" if incomplete != 1 else "was"} left out.')
-            log.info("Saved report %r (%d search[es], %d incomplete).", search_name, n, incomplete)
+            log.info("Saved report %r (%d query[ies], %d incomplete).", search_name, n, incomplete)
 
             # Store the cards without their error flags — the save succeeded.
             state["cards"] = [{**c, "error": None} for c in view]

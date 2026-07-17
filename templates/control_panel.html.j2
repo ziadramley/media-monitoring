@@ -135,8 +135,8 @@
 <div class="sheet">
 
   <header class="masthead">
-    <h1>Media Monitor</h1>
-    <p>Build a report from today’s headlines</p>
+    <h1>Mimi</h1>
+    <p>A media monitoring tool for building reports on US and UK headlines</p>
   </header>
 
   <nav class="section-nav">
@@ -158,9 +158,9 @@
 
   <section class="howto">
     <ul>
-      <li><strong>Build a query</strong> below — keywords, a timeframe, and which outlets to check. Add more than one and each becomes its own section of the report.</li>
-      <li><strong>Generate report</strong> to pull matching headlines from the last 24–72 hours, ready to read or print.</li>
-      <li><strong>Name and save</strong> a report to run it again another day — saved reports appear as sections along the top.</li>
+      <li><strong>How it works:</strong> Mimi pulls headlines via RSS from a network of US and UK news outlets.</li>
+      <li><strong>Building reports:</strong> Reports are made up of queries. You can have a single query or consolidate multiple into one report.</li>
+      <li><strong>Saving reports:</strong> Save a report to run it again without re-entering details.</li>
     </ul>
   </section>
 
@@ -178,7 +178,7 @@
     {% if c.error %}<div class="card-error">{{ c.error }}</div>{% endif %}
 
     <div class="field">
-      <label class="q">Query name <span style="font-weight:400;color:var(--ink-faint)">(optional)</span></label>
+      <label class="q">Query name <span style="font-weight:400;color:var(--ink-faint)">(mandatory)</span></label>
       <input type="text" name="name__{{ c.token }}" value="{{ c.name }}" placeholder="e.g. UK politics">
     </div>
 
@@ -226,7 +226,7 @@
 
     <div class="report-bar">
       <label class="q" for="search_name">Report name</label>
-      <p class="hint">Name your report to save it for next time. Leave it blank for a quick one-off — you can still Generate below.</p>
+      <p class="hint">Name it so it’s easy to find later. Generating a report saves it too — an unnamed one is saved as “Untitled Report”.</p>
       <div class="report-bar-row">
         <input type="text" id="search_name" name="search_name" value="{{ search_name }}" placeholder="e.g. Morning briefing">
         <button type="submit" formaction="/save" class="save">Save report</button>
@@ -245,7 +245,7 @@
   </form>
 
   <p class="footnote">
-    Runs entirely on your machine — only the outlets’ RSS feeds are contacted.<br>
+    Mini runs entirely on your machine so your data stays with you. Only the outlets’ RSS feeds are contacted.<br>
     Saved reports live in the <code>searches/</code> folder and also work from the command line:
     <code>python monitor.py --config searches/your-report.yaml</code>
   </p>
@@ -260,8 +260,8 @@
 
 <div id="overlay">
   <div class="spinner"></div>
-  <h2>Generating your report…</h2>
-  <p>Fetching the latest headlines from each outlet. This usually takes 10–20 seconds.</p>
+  <h2>Building your report…</h2>
+  <p>Fetching the latest headlines. This usually takes a few seconds.</p>
 </div>
 
 <script>
@@ -329,6 +329,16 @@
     cardsEl.querySelectorAll(".search-card").forEach(function (c) { tokens.push(c.dataset.token); });
     document.getElementById("card_order").value = tokens.join(",");
   });
+
+  // Auto-dismiss the "Saved …" confirmation after 5 seconds.
+  var okBanner = document.querySelector(".banner.ok");
+  if (okBanner) {
+    setTimeout(function () {
+      okBanner.style.transition = "opacity 0.6s";
+      okBanner.style.opacity = "0";
+      setTimeout(function () { okBanner.remove(); }, 600);
+    }, 5000);
+  }
 
   renumber();
 </script>

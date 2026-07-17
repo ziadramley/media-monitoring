@@ -137,3 +137,19 @@ def delete_search(slug: str, searches_dir: str | Path = SEARCHES_DIR) -> bool:
         path.unlink()
         return True
     return False
+
+
+def next_untitled_name(searches_dir: str | Path = SEARCHES_DIR) -> str:
+    """The next free "Untitled Report N" (N starting at 1) — used when a
+    report is generated without a name of its own."""
+    base = Path(searches_dir)
+    used: set[int] = set()
+    if base.is_dir():
+        for path in base.glob("untitled-report-*.yaml"):
+            match = re.fullmatch(r"untitled-report-(\d+)", path.stem)
+            if match:
+                used.add(int(match.group(1)))
+    n = 1
+    while n in used:
+        n += 1
+    return f"Untitled Report {n}"

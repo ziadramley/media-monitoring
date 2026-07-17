@@ -16,6 +16,7 @@ from monitoring.searches import (
     delete_search,
     list_searches,
     load_search,
+    next_untitled_name,
     save_search,
     slugify,
 )
@@ -109,6 +110,24 @@ class BrokenFiles(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             with self.assertRaises(ConfigError):
                 load_search("nope", PUBS, d)
+
+
+class NextUntitled(unittest.TestCase):
+    def test_starts_at_one(self):
+        with tempfile.TemporaryDirectory() as d:
+            self.assertEqual(next_untitled_name(d), "Untitled Report 1")
+
+    def test_increments_past_existing(self):
+        with tempfile.TemporaryDirectory() as d:
+            save_search("Untitled Report 1", [a_query()], d)
+            save_search("Untitled Report 2", [a_query()], d)
+            self.assertEqual(next_untitled_name(d), "Untitled Report 3")
+
+    def test_fills_the_lowest_gap(self):
+        with tempfile.TemporaryDirectory() as d:
+            save_search("Untitled Report 1", [a_query()], d)
+            save_search("Untitled Report 3", [a_query()], d)
+            self.assertEqual(next_untitled_name(d), "Untitled Report 2")
 
 
 if __name__ == "__main__":
