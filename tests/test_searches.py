@@ -13,7 +13,6 @@ from monitoring.config import ConfigError, load_queries
 from monitoring.models import Publication, Query
 from monitoring.searches import (
     _safe_path,
-    config_as_search,
     delete_search,
     list_searches,
     load_search,
@@ -110,22 +109,6 @@ class BrokenFiles(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             with self.assertRaises(ConfigError):
                 load_search("nope", PUBS, d)
-
-
-class ConfigBridge(unittest.TestCase):
-    def test_config_as_search_reads_config_yaml(self):
-        with tempfile.TemporaryDirectory() as d:
-            cfg = Path(d) / "config.yaml"
-            cfg.write_text(yaml.safe_dump({"queries": [
-                {"name": "UK", "keywords": ["budget"], "match": "any",
-                 "date_range": "past_24_hours", "publications": ["bbc"]}]}))
-            search = config_as_search(cfg, PUBS)
-            self.assertIsNotNone(search)
-            self.assertEqual(search.source, "config")
-            self.assertEqual(search.queries[0].name, "UK")
-
-    def test_missing_config_returns_none(self):
-        self.assertIsNone(config_as_search("/no/such/config.yaml", PUBS))
 
 
 if __name__ == "__main__":

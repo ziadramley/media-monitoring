@@ -9,7 +9,6 @@ Routes:
     GET  /                       the editor + saved-search list
     GET  /?new=1                 the editor, reset to one blank card
     GET  /edit/<slug>            load a saved search into the editor
-    GET  /edit-config            load config.yaml's searches into the editor
     POST /generate               build a report from the submitted cards
     POST /save                   save the submitted cards under a name
     GET  /run/<slug>             run a saved search straight to a report
@@ -32,7 +31,6 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from monitoring.constants import (
     DATE_RANGES,
-    DEFAULT_CONFIG_PATH,
     REPORTS_DIR,
     SEARCHES_DIR,
     WEB_HOST,
@@ -41,7 +39,6 @@ from monitoring.constants import (
 from monitoring.models import Publication, Query
 from monitoring.pipeline import generate_report
 from monitoring.searches import (
-    config_as_search,
     delete_search,
     list_searches,
     load_search,
@@ -235,7 +232,6 @@ def make_handler(
     publications: dict[str, Publication],
     reports_dir: str | Path = REPORTS_DIR,
     searches_dir: str | Path = SEARCHES_DIR,
-    config_path: str | Path = DEFAULT_CONFIG_PATH,
 ):
     """Build the request handler class, closing over the registry, output
     folder, and saved-search storage so the server stays a plain object."""
@@ -281,8 +277,6 @@ def make_handler(
             path = parsed.path
             if path == "/":
                 self._home(parse_qs(parsed.query))
-            elif path == "/edit-config":
-                self._load_config_into_editor()
             elif path.startswith("/edit/"):
                 self._edit_saved(unquote(path[len("/edit/"):]))
             elif path.startswith("/run/"):
@@ -311,14 +305,12 @@ def make_handler(
             except Exception:  # a storage hiccup shouldn't blank the panel
                 log.error("Could not list saved searches:\n%s", traceback.format_exc())
                 saved = []
-            config_search = config_as_search(config_path, publications)
             html = _jinja().get_template("control_panel.html.j2").render(
                 cards=cards,
                 grouped_publications=_grouped_publications(publications),
                 date_ranges=_date_range_options(),
                 all_pub_ids=set(publications),
                 saved_searches=saved,
-                config_search=config_search,
                 search_name=search_name,
                 top_error=top_error,
                 flash=flash,
@@ -343,16 +335,6 @@ def make_handler(
                 return
             state["cards"] = cards_from_queries(search.queries)
             state["search_name"] = search.name
-            self._redirect("/")
-
-        def _load_config_into_editor(self) -> None:
-            config_search = config_as_search(config_path, publications)
-            if not config_search:
-                self._render_editor(default_cards(publications), "", status=404,
-                                    top_error="config.yaml could not be loaded.")
-                return
-            state["cards"] = cards_from_queries(config_search.queries)
-            state["search_name"] = ""  # encourage saving under a new name
             self._redirect("/")
 
         # --- generating and saving -------------------------------------
@@ -488,12 +470,11 @@ def create_server(
     port: int,
     reports_dir: str | Path = REPORTS_DIR,
     searches_dir: str | Path = SEARCHES_DIR,
-    config_path: str | Path = DEFAULT_CONFIG_PATH,
     host: str = WEB_HOST,
 ) -> tuple[ThreadingHTTPServer, int]:
     """Bind the server to localhost, scanning upward for a free port if
     the requested one is busy. Returns (server, actual_port)."""
-    handler = make_handler(publications, reports_dir, searches_dir, config_path)
+    handler = make_handler(publications, reports_dir, searches_dir)
     last_error: OSError | None = None
     for candidate in range(port, port + WEB_PORT_SCAN_LIMIT):
         try:

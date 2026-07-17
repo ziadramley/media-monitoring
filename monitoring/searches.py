@@ -13,7 +13,6 @@ slug — a name like "../../config" can never escape the searches folder.
 """
 from __future__ import annotations
 
-import logging
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -23,8 +22,6 @@ import yaml
 from monitoring.config import ConfigError, build_queries
 from monitoring.constants import SEARCHES_DIR
 from monitoring.models import Publication, Query
-
-log = logging.getLogger("monitor")
 
 # A slug is lowercase letters, digits and single hyphens — nothing that
 # could form a path (no dots, slashes, or spaces). \Z (not $) anchors the
@@ -140,19 +137,3 @@ def delete_search(slug: str, searches_dir: str | Path = SEARCHES_DIR) -> bool:
         path.unlink()
         return True
     return False
-
-
-def config_as_search(
-    config_path: str | Path, publications: dict[str, Publication]
-) -> SavedSearch | None:
-    """Expose the hand-edited config.yaml as a read-only, loadable search
-    so its queries can be pulled into the editor as a starting point.
-    Returns None if config.yaml is missing or unreadable."""
-    from monitoring.config import load_queries  # local import avoids a cycle at import time
-
-    try:
-        queries = load_queries(config_path, publications)
-    except Exception as exc:  # best-effort bridge — a bad config.yaml must not blank the panel
-        log.warning("Could not offer %s in the editor: %s", config_path, exc)
-        return None
-    return SavedSearch(slug="__config__", name="config.yaml", queries=queries, source="config")

@@ -65,8 +65,9 @@ search. Press `Ctrl+C` in the terminal to stop it.
 Saved searches live in a `searches/` folder as small YAML files in the same
 format as `config.yaml` — so a search you saved in the panel can *also* be run
 from the command line: `python monitor.py --config searches/morning-briefing.yaml`.
-(The panel never edits `config.yaml` itself — that file stays yours to
-hand-edit — but it can load your `config.yaml` searches in as a starting point.)
+(The panel and `config.yaml` are independent: the panel writes only to
+`searches/` and never touches `config.yaml`, which stays yours to hand-edit for
+the daily `python monitor.py` run.)
 
 **2. Saved daily searches (for the same searches every morning).** Define
 your standing searches once in `config.yaml`, then run one command to get a
