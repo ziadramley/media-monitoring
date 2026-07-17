@@ -20,39 +20,52 @@
   .smallcaps { text-transform: uppercase; letter-spacing: 0.13em; font-size: 0.72rem; color: var(--ink-soft); }
 
   header.masthead { text-align: center; border-bottom: 4px double var(--rule-ink);
-    padding-bottom: 1.1rem; margin-bottom: 1.4rem; }
+    padding-bottom: 1.1rem; margin-bottom: 0; }
   header.masthead h1 { margin: 0 0 0.3rem; font-size: 2.3rem; font-weight: 700; }
   header.masthead p { margin: 0; font-style: italic; color: var(--ink-faint); }
+
+  /* Newspaper-style section nav: New report on the left, saved reports as
+     hoverable sections. */
+  .section-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 1.25rem;
+    padding: 0.45rem 0; border-bottom: 1px solid var(--rule); margin-bottom: 1.7rem; }
+  .new-report-btn { font-family: Georgia, serif; font-size: 0.72rem; text-transform: uppercase;
+    letter-spacing: 0.1em; font-weight: 700; color: var(--paper); background: var(--accent);
+    padding: 0.45em 0.9em; border-radius: 3px; text-decoration: none; white-space: nowrap; }
+  .new-report-btn:hover { background: #000; }
+  .nav-empty { font-style: italic; font-size: 0.8rem; color: var(--ink-faint); }
+  .nav-section { position: relative; }
+  .nav-section > .nav-section-name { display: inline-block; font-family: Georgia, serif;
+    text-transform: uppercase; letter-spacing: 0.09em; font-size: 0.75rem; color: var(--ink);
+    padding: 0.35rem 0.1rem; cursor: default; border-bottom: 2px solid transparent; }
+  .nav-section:hover > .nav-section-name, .nav-section:focus-within > .nav-section-name {
+    border-bottom-color: var(--rule-ink); }
+  .nav-dropdown { position: absolute; top: 100%; left: 0; z-index: 5; min-width: 8rem;
+    background: var(--field); border: 1px solid var(--rule); border-radius: 3px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.09); padding: 0.25rem 0; display: none; }
+  .nav-section:hover > .nav-dropdown, .nav-section:focus-within > .nav-dropdown { display: block; }
+  .nav-dropdown a, .nav-dropdown button { display: block; width: 100%; text-align: left;
+    font-family: Georgia, serif; font-size: 0.88rem; color: var(--ink); background: none; border: none;
+    padding: 0.4rem 0.9rem; text-decoration: none; cursor: pointer; }
+  .nav-dropdown a:hover, .nav-dropdown button:hover { background: var(--note-bg); }
+  .nav-dropdown form { margin: 0; }
+
+  /* How-to */
+  .howto { background: var(--note-bg); border-radius: 3px; padding: 0.8rem 1.15rem; margin-bottom: 1.8rem; }
+  .howto ul { margin: 0; padding-left: 1.1rem; }
+  .howto li { font-size: 0.85rem; color: var(--ink-soft); margin: 0.28rem 0; line-height: 1.5; }
+  .howto strong { color: var(--ink); }
 
   .banner { border-radius: 2px; padding: 0.7rem 1rem; margin-bottom: 1.4rem; }
   .banner.error { background: var(--error-bg); border: 1px solid var(--error-border); color: var(--error-ink); }
   .banner.ok { background: var(--ok-bg); border: 1px solid var(--ok-border); color: #2f5227; }
-
-  /* Saved searches strip */
-  .saved { margin-bottom: 2rem; }
-  .saved h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.12em;
-    color: var(--ink-soft); border-bottom: 1px solid var(--rule); padding-bottom: 0.4rem; margin: 0 0 0.6rem; }
-  .saved ul { list-style: none; margin: 0; padding: 0; }
-  .saved li { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.2rem 0.7rem;
-    padding: 0.4rem 0; border-bottom: 1px solid var(--rule); }
-  .saved li:last-child { border-bottom: none; }
-  .saved .s-name { font-weight: 700; }
-  .saved .s-count { font-size: 0.78rem; color: var(--ink-faint); font-style: italic; margin-right: auto; }
-  .saved a, .saved button.link { font-size: 0.8rem; color: var(--ink-soft); background: none;
-    border: none; cursor: pointer; text-decoration: underline; padding: 0; font-family: Georgia, serif; }
-  .saved a:hover, .saved button.link:hover { color: var(--ink); }
-  .saved form.inline { display: inline; margin: 0; }
 
   /* Report name + top actions */
   .report-bar { border-bottom: 1px solid var(--rule); padding-bottom: 1.5rem; margin-bottom: 1.7rem; }
   .report-bar > label.q { display: block; font-weight: 700; font-size: 1.02rem; margin-bottom: 0.12rem; }
   .report-bar-row { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
   .report-bar-row input { flex: 1; min-width: 12rem; }
-  .new-report { font-family: Georgia, serif; font-size: 0.85rem; color: var(--ink-soft);
-    text-decoration: underline; white-space: nowrap; }
-  .new-report:hover { color: var(--ink); }
 
-  /* Search cards */
+  /* Query cards */
   .search-card { border: 1px solid var(--rule); border-radius: 4px; background: var(--card-bg);
     padding: 1.1rem 1.2rem 1.3rem; margin-bottom: 1.1rem; }
   .search-card > .card-head { display: flex; align-items: baseline; justify-content: space-between;
@@ -107,7 +120,7 @@
     text-align: center; line-height: 1.6; }
   .footnote code { font-style: normal; font-size: 0.76rem; }
 
-  #overlay { display: none; position: fixed; inset: 0; background: rgba(251,250,247,0.94); z-index: 10;
+  #overlay { display: none; position: fixed; inset: 0; background: rgba(251,250,247,0.94); z-index: 20;
     flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2rem; }
   #overlay h2 { font-size: 1.6rem; margin: 0 0 0.6rem; }
   #overlay p { color: var(--ink-soft); font-style: italic; max-width: 26rem; }
@@ -126,40 +139,46 @@
     <p>Build a report from today’s headlines</p>
   </header>
 
-  {% if flash %}<div class="banner ok">{{ flash }}</div>{% endif %}
-  {% if top_error %}<div class="banner error">{{ top_error }}</div>{% endif %}
-
-  {% if saved_searches %}
-  <section class="saved">
-    <h2>Your saved searches</h2>
-    <ul>
-      {% for s in saved_searches %}
-      <li>
-        <span class="s-name">{{ s.name }}</span>
-        <span class="s-count">{{ s.queries|length }} search{{ "es" if s.queries|length != 1 }}</span>
+  <nav class="section-nav">
+    <a class="new-report-btn" href="/?new=1" onclick="return confirmNew();">New report</a>
+    {% for s in saved_searches %}
+    <div class="nav-section" tabindex="0">
+      <span class="nav-section-name">{{ s.name }}</span>
+      <div class="nav-dropdown">
         <a href="/run/{{ s.slug }}">Run</a>
         <a href="/edit/{{ s.slug }}">Edit</a>
-        <form class="inline delete-form" method="post" action="/delete/{{ s.slug }}" data-name="{{ s.name }}">
-          <button type="submit" class="link">Delete</button>
+        <form class="delete-form" method="post" action="/delete/{{ s.slug }}" data-name="{{ s.name }}">
+          <button type="submit">Delete</button>
         </form>
-      </li>
-      {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+    {% if not saved_searches %}<span class="nav-empty">Saved reports will appear here.</span>{% endif %}
+  </nav>
+
+  <section class="howto">
+    <ul>
+      <li><strong>Build a query</strong> below — keywords, a timeframe, and which outlets to check. Add more than one and each becomes its own section of the report.</li>
+      <li><strong>Generate report</strong> to pull matching headlines from the last 24–72 hours, ready to read or print.</li>
+      <li><strong>Name and save</strong> a report to run it again another day — saved reports appear as sections along the top.</li>
     </ul>
   </section>
-  {% endif %}
+
+  {% if flash %}<div class="banner ok">{{ flash }}</div>{% endif %}
+  {% if top_error %}<div class="banner error">{{ top_error }}</div>{% endif %}
 
   {% set default_range = date_ranges[0][0] %}
 
   {%- macro render_card(c) -%}
   <div class="search-card" data-token="{{ c.token }}">
     <div class="card-head">
-      <h3>Search <span class="card-number"></span></h3>
+      <h3>Query <span class="card-number"></span></h3>
       <button type="button" class="remove-card" onclick="removeCard(this)">remove</button>
     </div>
     {% if c.error %}<div class="card-error">{{ c.error }}</div>{% endif %}
 
     <div class="field">
-      <label class="q">Search name <span style="font-weight:400;color:var(--ink-faint)">(optional)</span></label>
+      <label class="q">Query name <span style="font-weight:400;color:var(--ink-faint)">(optional)</span></label>
       <input type="text" name="name__{{ c.token }}" value="{{ c.name }}" placeholder="e.g. UK politics">
     </div>
 
@@ -211,7 +230,6 @@
       <div class="report-bar-row">
         <input type="text" id="search_name" name="search_name" value="{{ search_name }}" placeholder="e.g. Morning briefing">
         <button type="submit" formaction="/save" class="save">Save report</button>
-        <a class="new-report" href="/?new=1" onclick="return confirmNew();">New report</a>
       </div>
     </div>
 
@@ -219,7 +237,7 @@
       {% for c in cards %}{{ render_card(c) }}{% endfor %}
     </div>
 
-    <button type="button" class="add-card" onclick="addCard()">+ Add another search</button>
+    <button type="button" class="add-card" onclick="addCard()">+ Add a new query</button>
 
     <div class="actions">
       <button type="submit" formaction="/generate" class="generate" onclick="showLoading()">Generate report</button>
@@ -234,7 +252,7 @@
 
 </div>
 
-<!-- Template for a fresh card, cloned by "Add another search". -->
+<!-- Template for a fresh query card, cloned by "Add a new query". -->
 <template id="card-template">
   {{ render_card({'token': '__TOKEN__', 'name': '', 'keywords': '', 'match': 'any',
                   'date_range': default_range, 'selected': all_pub_ids, 'error': none}) }}
@@ -253,7 +271,7 @@
     var cards = cardsEl.querySelectorAll(".search-card");
     cards.forEach(function (card, i) {
       card.querySelector(".card-number").textContent = i + 1;
-      // Hide "remove" when only one card remains.
+      // Hide "remove" when only one query remains.
       card.querySelector(".remove-card").style.visibility = cards.length > 1 ? "visible" : "hidden";
     });
   }
@@ -297,7 +315,7 @@
 
   // Confirm deletes. The name is read from a data- attribute (a safe HTML
   // attribute context) rather than interpolated into inline JS — so a
-  // saved search named with quotes or script can't execute here.
+  // saved report named with quotes or script can't execute here.
   document.querySelectorAll(".delete-form").forEach(function (form) {
     form.addEventListener("submit", function (e) {
       var name = form.dataset.name || "this report";
@@ -305,7 +323,7 @@
     });
   });
 
-  // Record the visual order of cards so the server rebuilds sections in order.
+  // Record the visual order of queries so the server rebuilds sections in order.
   document.getElementById("search-form").addEventListener("submit", function () {
     var tokens = [];
     cardsEl.querySelectorAll(".search-card").forEach(function (c) { tokens.push(c.dataset.token); });
