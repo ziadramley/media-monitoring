@@ -157,14 +157,28 @@ outlets (the report shows a note on those sections). If a rolling archive
 matters to you, run the tool once or twice a day and keep the reports — the
 `reports/` folder is your archive.
 
+## Searches, queries, and reports
+
+Three words with precise meanings in Mimi:
+
+- A **query** is one set of parameters: keywords, match mode, timeframe,
+  and which outlets to check.
+- A **search** is a named combination of queries, saved as a YAML file in
+  the `searches/` folder — the panel and the command line both read them.
+- A **report** is the output of running a search at a specific date and
+  time, saved in `reports/`.
+
 ## The report
 
-- Self-contained single HTML file in `reports/`, timestamped, nothing external
-  — it survives being emailed or archived.
-- **Download as Markdown** button for pasting into email, Slack, or notes.
-- Print-friendly — designed to be handed out at a morning meeting.
-- Feeds that couldn't be reached are listed in a warnings box, so you know
-  what the report *doesn't* cover.
+- In the control panel, a report opens on screen with a **Remove** button
+  beside each article — prune the irrelevant ones and the report (and its
+  saved file) update immediately. Regenerate the report to start over.
+- The **printable version** is a self-contained single HTML file in
+  `reports/`, timestamped, nothing external — it survives being emailed or
+  archived, and prints cleanly for a morning meeting. It carries only the
+  curated articles: no buttons, no navigation, no error notes.
+- Feeds that couldn't be reached are shown in the on-screen report and the
+  terminal log, so you know what the report *doesn't* cover.
 
 ## Command-line options
 
@@ -198,7 +212,7 @@ monitoring/fetcher.py       fetches feeds concurrently (15s timeout, honest User
 monitoring/parser.py        cleans feed entries: dates, HTML stripping, authors, URLs
 monitoring/matcher.py       applies your keywords and date windows (pure logic, unit-tested)
 monitoring/pipeline.py      the shared fetch → filter → render engine both entry points use
-monitoring/report.py        renders the report and its Markdown twin
+monitoring/report.py        renders reports and applies article removals
 monitoring/webserver.py     the control panel's HTTP layer (form, generate, serve)
 monitoring/searches.py      saving/loading named searches (path-safe file storage)
 templates/_shell.html.j2    shared page shell (masthead + action nav) for the app

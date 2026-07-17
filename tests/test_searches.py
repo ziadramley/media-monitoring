@@ -115,19 +115,19 @@ class BrokenFiles(unittest.TestCase):
 class NextUntitled(unittest.TestCase):
     def test_starts_at_one(self):
         with tempfile.TemporaryDirectory() as d:
-            self.assertEqual(next_untitled_name(d), "Untitled Report 1")
+            self.assertEqual(next_untitled_name(d), "Untitled Search 1")
 
     def test_increments_past_existing(self):
         with tempfile.TemporaryDirectory() as d:
-            save_search("Untitled Report 1", [a_query()], d)
-            save_search("Untitled Report 2", [a_query()], d)
-            self.assertEqual(next_untitled_name(d), "Untitled Report 3")
+            save_search("Untitled Search 1", [a_query()], d)
+            save_search("Untitled Search 2", [a_query()], d)
+            self.assertEqual(next_untitled_name(d), "Untitled Search 3")
 
     def test_fills_the_lowest_gap(self):
         with tempfile.TemporaryDirectory() as d:
-            save_search("Untitled Report 1", [a_query()], d)
-            save_search("Untitled Report 3", [a_query()], d)
-            self.assertEqual(next_untitled_name(d), "Untitled Report 2")
+            save_search("Untitled Search 1", [a_query()], d)
+            save_search("Untitled Search 3", [a_query()], d)
+            self.assertEqual(next_untitled_name(d), "Untitled Search 2")
 
 
 if __name__ == "__main__":

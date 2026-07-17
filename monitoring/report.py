@@ -1,15 +1,14 @@
-"""Assembling and rendering the report.
+"""Assembling and rendering a report — the output of running a search
+at a specific date and time.
 
 The only module that touches Jinja2 — everything upstream deals in
-plain data. Also builds the Markdown twin of the report, which is
-embedded in the HTML so the download button works offline, even if
-the file is emailed around on its own.
+plain data.
 """
 from __future__ import annotations
 
 import logging
 import webbrowser
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 from pathlib import Path
 
@@ -62,59 +61,30 @@ def format_day(value: datetime) -> str:
     return f"{value.strftime('%A')} {value.day} {value.strftime('%B %Y')}"
 
 
-# --- Markdown twin -----------------------------------------------------
-# Format contract: H1 title, one H2 per section with match count and
-# range, one list item per article (bold headline, meta line, indented
-# standfirst, bare URL). Failed feeds under a final H2.
+# --- pruning -----------------------------------------------------------
 
-def build_markdown(
+def apply_removals(
     sections: list[ReportSection],
-    failed_feeds: list[FeedFetchResult],
-    generated_at: datetime,
-    report_name: str | None = None,
-    publications: int = 0,
-) -> str:
-    total = sum(len(s.articles) for s in sections)
-    meta = f"Generated {format_day(generated_at)} at {generated_at.strftime('%H:%M')}"
-    if publications:
-        meta += f" · {publications} publication{'s' if publications != 1 else ''}"
-    meta += f" · {total} result{'s' if total != 1 else ''}"
-    lines: list[str] = [
-        f"# {report_name or 'Media Monitoring'}",
-        "",
-        meta,
-        "",
+    removed: set[tuple[str, str]],
+) -> list[ReportSection]:
+    """Sections with the user's removed articles filtered out.
+
+    `removed` holds (section anchor, article dedupe_key) pairs — the pair
+    is needed because the same article can legitimately appear in two
+    sections and removal targets just one. Returns shallow copies; the
+    originals (the stashed report) are never mutated. A fully-pruned
+    section stays present so the report still says
+    "No matching articles found" rather than losing the section.
+    """
+    if not removed:
+        return sections
+    return [
+        replace(section, articles=[
+            a for a in section.articles
+            if (section.anchor, a.dedupe_key) not in removed
+        ])
+        for section in sections
     ]
-    for section in sections:
-        count = len(section.articles)
-        lines.append(f"## {section.name} ({count} match{'es' if count != 1 else ''}, {section.range_label})")
-        lines.append("")
-        keyword_list = ", ".join(f'"{k}"' for k in section.keywords)
-        if keyword_list:
-            lines.append(f"Keywords ({section.match}): {keyword_list}")
-            lines.append("")
-        if not section.articles:
-            lines.append("No matching articles found.")
-            lines.append("")
-            continue
-        for a in section.articles:
-            meta = a.publication_name
-            if a.author:
-                meta += f" — {a.author}"
-            meta += f" — {format_datetime(a.published)}"
-            lines.append(f"- **{a.title}**  ")
-            lines.append(f"  {meta}  ")
-            if a.standfirst:
-                lines.append(f"  {a.standfirst}  ")
-            lines.append(f"  <{a.url}>")
-            lines.append("")
-    if failed_feeds:
-        lines.append("## Feeds not reached this run")
-        lines.append("")
-        for f in failed_feeds:
-            lines.append(f"- {f.publication_name}: {f.feed_url} ({f.error})")
-        lines.append("")
-    return "\n".join(lines)
 
 
 # --- HTML --------------------------------------------------------------
@@ -131,7 +101,6 @@ def render_html(
         autoescape=select_autoescape(enabled_extensions=("html", "j2")),
     )
     env.filters["datefmt"] = format_datetime
-    markdown_filename = generated_at.strftime(REPORT_FILENAME_FORMAT).replace(".html", ".md")
     return env.get_template("report.html.j2").render(
         sections=sections,
         failed_feeds=failed_feeds,
@@ -140,8 +109,6 @@ def render_html(
         total_articles=sum(len(s.articles) for s in sections),
         report_name=report_name or "Media Monitoring",
         publications=publications,
-        markdown_payload=build_markdown(sections, failed_feeds, generated_at, report_name, publications),
-        markdown_filename=markdown_filename,
     )
 
 

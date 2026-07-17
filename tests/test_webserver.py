@@ -151,14 +151,24 @@ class ReportNameThreading(unittest.TestCase):
         self.assertIn("3 publications", html)
         self.assertIn("1 result", html)
 
-    def test_toc_only_with_multiple_sections(self):
-        self.assertIn('class="toc', self._render())            # 2 sections
+    def test_printable_is_minimal(self):
+        # The printable file must carry no TOC, no warnings box, no
+        # markdown script, and no remove buttons — even with multiple
+        # sections and failed feeds present.
+        from monitoring.models import FeedFetchResult
         from datetime import datetime, timezone
         from monitoring.report import ReportSection, render_html
-        one = [ReportSection("Solo", "q1", [], "past 24 hours", False, ["a"], "any")]
-        html = render_html(one, [], datetime(2026, 7, 17, tzinfo=timezone.utc),
-                           report_name="Solo", publications=1)
+        failed = [FeedFetchResult("x", "X News", "https://x/rss", ok=False, error="boom")]
+        secs = [
+            ReportSection("Alpha", "q1", [], "past 24 hours", False, ["a"], "any"),
+            ReportSection("Beta", "q2", [], "past 24 hours", False, ["b"], "any"),
+        ]
+        html = render_html(secs, failed, datetime(2026, 7, 17, tzinfo=timezone.utc),
+                           report_name="Min", publications=1)
         self.assertNotIn('class="toc', html)
+        self.assertNotIn("could not be reached", html)
+        self.assertNotIn("REPORT_MARKDOWN", html)
+        self.assertNotIn("remove-article", html)
 
 
 if __name__ == "__main__":

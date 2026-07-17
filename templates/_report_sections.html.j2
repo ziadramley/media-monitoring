@@ -1,8 +1,10 @@
 {#- Shared article/section markup used by both the portable report file
     (report.html.j2) and the in-app report view (report_view.html.j2), so
     the two surfaces can never drift. Requires a `datefmt` Jinja filter and
-    `.query`/`.entry`/`.headline`/`.meta`/`.standfirst` styles in the host. -#}
-{%- macro render_sections(sections) -%}
+    `.query`/`.entry`/`.headline`/`.meta`/`.standfirst` styles in the host.
+    With removable=true (in-app only), each article gets a small Remove
+    form so the user can prune it from the report before printing. -#}
+{%- macro render_sections(sections, removable=false) -%}
 {% for section in sections %}
 <section class="query" id="{{ section.anchor }}">
   <header>
@@ -22,11 +24,20 @@
     {% for a in section.articles %}
     <article class="entry">
       <h3 class="headline"><a href="{{ a.url }}" target="_blank" rel="noopener">{{ a.title }}</a></h3>
-      <p class="meta smallcaps">
+      {#- a <div>, not a <p>: HTML parsers auto-close a <p> when a <form>
+          starts, which would hoist the Remove form out of the line -#}
+      <div class="meta smallcaps">
         <span class="outlet">{{ a.publication_name }}</span>
         {%- if a.author %} · {{ a.author }}{% endif %}
         · <time>{{ a.published|datefmt }}</time>
-      </p>
+        {%- if removable %}
+        <form class="remove-article" method="post" action="/report/remove">
+          <input type="hidden" name="anchor" value="{{ section.anchor }}">
+          <input type="hidden" name="key" value="{{ a.dedupe_key }}">
+          <button type="submit" title="Remove this article from the report">Remove</button>
+        </form>
+        {%- endif %}
+      </div>
       {% if a.standfirst %}<p class="standfirst">{{ a.standfirst }}</p>{% endif %}
     </article>
     {% endfor %}

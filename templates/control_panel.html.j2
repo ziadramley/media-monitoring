@@ -1,5 +1,5 @@
 {% extends "_shell.html.j2" %}
-{% block title %}Mimi — build a report{% endblock %}
+{% block title %}Mimi — build a search{% endblock %}
 
 {% block extra_css %}
   .banner { border-radius: 2px; padding: 0.7rem 1rem; margin-bottom: 1.4rem; }
@@ -139,11 +139,11 @@
     <input type="hidden" name="card_order" id="card_order" value="">
 
     <div class="report-bar">
-      <label class="q" for="search_name">Report name</label>
-      <p class="hint">Name it so it’s easy to find later. Generating a report saves it too — an unnamed one is saved as “Untitled Report”.</p>
+      <label class="q" for="search_name">Search name</label>
+      <p class="hint">Name it so it’s easy to find later. Generating a report saves the search too — an unnamed one is saved as “Untitled Search”.</p>
       <div class="report-bar-row">
         <input type="text" id="search_name" name="search_name" value="{{ search_name }}" placeholder="e.g. Morning briefing">
-        <button type="submit" formaction="/save" class="save">Save report</button>
+        <button type="submit" formaction="/save" class="save">Save search</button>
       </div>
     </div>
 
@@ -160,8 +160,8 @@
 
   <p class="footnote">
     Mimi runs entirely on your machine so your data stays with you. Only the outlets’ RSS feeds are contacted.<br>
-    Saved reports live in the <code>searches/</code> folder and also work from the command line:
-    <code>python monitor.py --config searches/your-report.yaml</code>
+    Saved searches live in the <code>searches/</code> folder and also work from the command line:
+    <code>python monitor.py --config searches/your-search.yaml</code>
   </p>
 
   <!-- Template for a fresh query card, cloned by "Add a new query". -->

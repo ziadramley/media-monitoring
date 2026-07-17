@@ -9,6 +9,7 @@ Routes:
     GET  /                       the editor + saved-search list
     GET  /?new=1                 the editor, reset to one blank card
     GET  /report                 the in-app view of the last generated report
+    POST /report/remove          prune one article from the current report
     GET  /edit/<slug>            load a saved search into the editor
     POST /generate               build a report from the submitted cards
     POST /save                   save the submitted cards under a name
@@ -43,7 +44,13 @@ from monitoring.constants import (
 )
 from monitoring.models import Publication, Query
 from monitoring.pipeline import generate_report
-from monitoring.report import build_markdown, format_datetime, format_day
+from monitoring.report import (
+    apply_removals,
+    format_datetime,
+    format_day,
+    render_html,
+    write_report,
+)
 from monitoring.searches import (
     delete_search,
     list_searches,
@@ -272,6 +279,8 @@ def make_handler(
             path = urlparse(self.path).path
             if path == "/generate":
                 self._generate()
+            elif path == "/report/remove":
+                self._remove_article()
             elif path == "/save":
                 self._save()
             elif path.startswith("/delete/"):
@@ -288,14 +297,14 @@ def make_handler(
                 return []
 
         def _stash_report(self, name: str, result) -> None:
-            """Remember the last report so GET /report can re-render it."""
+            """Remember the last report so GET /report can re-render it.
+            `removed` collects (section anchor, dedupe_key) pairs as the
+            user prunes articles; it starts empty for every new report."""
             state["report"] = {
                 "name": name,
                 "file": result.path.name,
                 "result": result,
-                "markdown": build_markdown(result.sections, result.failed,
-                                           result.generated_at, name, result.publications),
-                "markdown_filename": result.path.name.replace(".html", ".md"),
+                "removed": set(),
             }
 
         # --- rendering the editor --------------------------------------
@@ -320,21 +329,48 @@ def make_handler(
                 self._redirect("/")
                 return
             result = rep["result"]
+            sections = apply_removals(result.sections, rep["removed"])
             html = _jinja().get_template("report_view.html.j2").render(
                 saved_searches=self._saved(),
                 flash=None,
                 report_name=rep["name"],
                 report_file=rep["file"],
-                sections=result.sections,
+                sections=sections,
                 failed_feeds=result.failed,
                 generated_at=result.generated_at,
                 generated_day=format_day(result.generated_at),
-                total_articles=result.total_articles,
+                total_articles=sum(len(s.articles) for s in sections),
                 publications=result.publications,
-                markdown_payload=rep["markdown"],
-                markdown_filename=rep["markdown_filename"],
             )
             self._send_html(html, status=200)
+
+        # --- pruning articles from the report --------------------------
+        def _remove_article(self) -> None:
+            """Remove one article from the current report. The pruned
+            report is immediately re-written to reports/ (same filename),
+            so the archived file always matches what the user curated and
+            the printable link stays a plain page-open."""
+            rep = state.get("report")
+            if not rep:
+                self._redirect("/")
+                return
+            fields = self._read_form()
+            anchor = fields.get("anchor", [""])[0]
+            key = fields.get("key", [""])[0]
+            result = rep["result"]
+            valid_anchors = {s.anchor for s in result.sections}
+            if anchor in valid_anchors and key:
+                rep["removed"].add((anchor, key))
+                pruned = apply_removals(result.sections, rep["removed"])
+                try:
+                    html = render_html(pruned, [], result.generated_at,
+                                       report_name=rep["name"],
+                                       publications=result.publications)
+                    write_report(html, result.generated_at, reports_path)
+                except OSError:
+                    log.error("Could not re-write pruned report:\n%s",
+                              traceback.format_exc())
+            self._redirect(f"/report#{anchor}" if anchor in valid_anchors else "/report")
 
         def _home(self, query: dict[str, list[str]]) -> None:
             if "new" in query:
@@ -368,7 +404,7 @@ def make_handler(
                 )
                 return
             # Generating always saves the report. An unnamed report is saved
-            # under an auto-assigned "Untitled Report N".
+            # under an auto-assigned "Untitled Search N".
             if not slugify(search_name):
                 search_name = next_untitled_name(searches_dir)
             try:
@@ -406,7 +442,7 @@ def make_handler(
             if not slugify(search_name):
                 self._render_editor(
                     view or default_cards(publications), search_name, status=400,
-                    top_error="Give the report a name (letters or numbers) to save it.",
+                    top_error="Give the search a name (letters or numbers) to save it.",
                 )
                 return
             try:
@@ -428,7 +464,7 @@ def make_handler(
                 if incomplete:
                     flash += (f' {incomplete} quer{"ies" if incomplete != 1 else "y"} with no '
                               f'publication selected {"were" if incomplete != 1 else "was"} left out.')
-            log.info("Saved report %r (%d query[ies], %d incomplete).", search_name, n, incomplete)
+            log.info("Saved search %r (%d query[ies], %d incomplete).", search_name, n, incomplete)
 
             # Store the cards without their error flags — the save succeeded.
             state["cards"] = [{**c, "error": None} for c in view]
@@ -448,7 +484,7 @@ def make_handler(
             if not search.queries:  # an empty draft — nothing to run yet
                 self._render_editor(
                     default_cards(publications), search.name, status=200,
-                    top_error=f"“{search.name}” has no searches yet — add some, then Generate.",
+                    top_error=f"“{search.name}” has no queries yet — add some, then Generate.",
                 )
                 return
             log.info("Running saved search %r.", search.name)

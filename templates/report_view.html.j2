@@ -31,6 +31,13 @@
   .standfirst { margin: 0; font-size: 0.94rem; color: var(--ink-soft); line-height: 1.55; }
   .empty { font-style: italic; color: var(--ink-faint); margin: 0.4rem 0 0; }
 
+  /* Per-article Remove (in-app only; never appears in the printable file) */
+  .remove-article { display: inline; margin-left: 0.55em; }
+  .remove-article button { font-family: Georgia, serif; font-size: 0.68rem; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--ink-faint); background: none; border: none; cursor: pointer;
+    text-decoration: underline; padding: 0; }
+  .remove-article button:hover { color: var(--error-ink); }
+
   /* Right-side widgets: inline at the top on narrow screens, floated into
      the right margin beside the centred column on wide screens. */
   .report-widgets { margin: 0 0 2rem; display: flex; flex-direction: column; gap: 1rem; }
@@ -60,7 +67,6 @@
     <h1>{{ report_name }}</h1>
     <p class="report-meta">Generated {{ generated_day }} at {{ generated_at.strftime("%H:%M") }} · {{ publications }} publication{{ "s" if publications != 1 }} · {{ total_articles }} result{{ "s" if total_articles != 1 }}</p>
     <div class="report-actions">
-      <button type="button" onclick="downloadMarkdown()">Download as Markdown</button>
       <a href="/reports/{{ report_file }}" target="_blank" rel="noopener">Printable version</a>
     </div>
   </div>
@@ -89,25 +95,11 @@
     {% endif %}
   </aside>
 
-  {{ render_sections(sections) }}
+  {{ render_sections(sections, removable=true) }}
 {% endblock %}
 
 {% block extra_js %}
 <script>
-  var REPORT_MARKDOWN = {{ markdown_payload|tojson }};
-  var MARKDOWN_FILENAME = {{ markdown_filename|tojson }};
-  function downloadMarkdown() {
-    var blob = new Blob([REPORT_MARKDOWN], { type: "text/markdown;charset=utf-8" });
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement("a");
-    a.href = url;
-    a.download = MARKDOWN_FILENAME;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  }
-
   // Align the top of the floated widgets with the rule under the action bar.
   // Only when they're floated (wide screens); on narrow screens they sit
   // inline and these overrides are cleared.
