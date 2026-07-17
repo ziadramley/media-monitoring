@@ -42,7 +42,15 @@
     border: none; cursor: pointer; text-decoration: underline; padding: 0; font-family: Georgia, serif; }
   .saved a:hover, .saved button.link:hover { color: var(--ink); }
   .saved form.inline { display: inline; margin: 0; }
-  .saved li.config .s-name { font-weight: 400; font-style: italic; color: var(--ink-soft); }
+
+  /* Report name + top actions */
+  .report-bar { border-bottom: 1px solid var(--rule); padding-bottom: 1.5rem; margin-bottom: 1.7rem; }
+  .report-bar > label.q { display: block; font-weight: 700; font-size: 1.02rem; margin-bottom: 0.12rem; }
+  .report-bar-row { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
+  .report-bar-row input { flex: 1; min-width: 12rem; }
+  .new-report { font-family: Georgia, serif; font-size: 0.85rem; color: var(--ink-soft);
+    text-decoration: underline; white-space: nowrap; }
+  .new-report:hover { color: var(--ink); }
 
   /* Search cards */
   .search-card { border: 1px solid var(--rule); border-radius: 4px; background: var(--card-bg);
@@ -91,12 +99,8 @@
   button.generate { font-family: Georgia, serif; font-size: 1.05rem; color: var(--paper);
     background: var(--accent); border: none; border-radius: 3px; padding: 0.7em 1.8em; cursor: pointer; }
   button.generate:hover { background: #000; }
-  .save-row { display: flex; gap: 0.6rem; align-items: center; margin-top: 1.3rem;
-    padding-top: 1.2rem; border-top: 1px dotted var(--rule); flex-wrap: wrap; }
-  .save-row label { font-size: 0.85rem; color: var(--ink-soft); }
-  .save-row input { flex: 1; min-width: 12rem; }
   button.save { font-family: Georgia, serif; font-size: 0.92rem; color: var(--ink); background: none;
-    border: 1px solid var(--rule-ink); border-radius: 3px; padding: 0.5em 1.1em; cursor: pointer; }
+    border: 1px solid var(--rule-ink); border-radius: 3px; padding: 0.5em 1.1em; cursor: pointer; white-space: nowrap; }
   button.save:hover { background: var(--note-bg); }
 
   .footnote { margin-top: 2rem; font-size: 0.8rem; color: var(--ink-faint); font-style: italic;
@@ -155,6 +159,11 @@
     {% if c.error %}<div class="card-error">{{ c.error }}</div>{% endif %}
 
     <div class="field">
+      <label class="q">Search name <span style="font-weight:400;color:var(--ink-faint)">(optional)</span></label>
+      <input type="text" name="name__{{ c.token }}" value="{{ c.name }}" placeholder="e.g. UK politics">
+    </div>
+
+    <div class="field">
       <label class="q">Keywords or phrases</label>
       <p class="hint">Separate with commas. Multi-word entries match as an exact phrase (“spending review”). Case doesn’t matter.</p>
       <textarea name="keywords__{{ c.token }}" placeholder="budget, spending review, fiscal">{{ c.keywords }}</textarea>
@@ -190,16 +199,21 @@
       </fieldset>
       {% endfor %}
     </div>
-
-    <div class="field">
-      <label class="q">Section heading <span style="font-weight:400;color:var(--ink-faint)">(optional)</span></label>
-      <input type="text" name="name__{{ c.token }}" value="{{ c.name }}" placeholder="e.g. Budget coverage">
-    </div>
   </div>
   {%- endmacro -%}
 
   <form method="post" id="search-form">
     <input type="hidden" name="card_order" id="card_order" value="">
+
+    <div class="report-bar">
+      <label class="q" for="search_name">Report name</label>
+      <p class="hint">Name your report to save it for next time. Leave it blank for a quick one-off — you can still Generate below.</p>
+      <div class="report-bar-row">
+        <input type="text" id="search_name" name="search_name" value="{{ search_name }}" placeholder="e.g. Morning briefing">
+        <button type="submit" formaction="/save" class="save">Save report</button>
+        <a class="new-report" href="/?new=1" onclick="return confirmNew();">New report</a>
+      </div>
+    </div>
 
     <div id="cards">
       {% for c in cards %}{{ render_card(c) }}{% endfor %}
@@ -209,19 +223,13 @@
 
     <div class="actions">
       <button type="submit" formaction="/generate" class="generate" onclick="showLoading()">Generate report</button>
-
-      <div class="save-row">
-        <label for="search_name">Save as</label>
-        <input type="text" id="search_name" name="search_name" value="{{ search_name }}" placeholder="e.g. Morning briefing">
-        <button type="submit" formaction="/save" class="save">Save search</button>
-      </div>
     </div>
   </form>
 
   <p class="footnote">
     Runs entirely on your machine — only the outlets’ RSS feeds are contacted.<br>
-    Saved searches live in the <code>searches/</code> folder and also work from the command line:
-    <code>python monitor.py --config searches/your-search.yaml</code>
+    Saved reports live in the <code>searches/</code> folder and also work from the command line:
+    <code>python monitor.py --config searches/your-report.yaml</code>
   </p>
 
 </div>
@@ -264,7 +272,7 @@
     var token = nextToken();
     cardsEl.insertAdjacentHTML("beforeend", html.split("__TOKEN__").join(token));
     renumber();
-    cardsEl.lastElementChild.querySelector("textarea").focus();
+    cardsEl.lastElementChild.querySelector('input[type="text"]').focus();
   }
 
   function removeCard(button) {
@@ -283,13 +291,17 @@
     document.getElementById("overlay").style.display = "flex";
   }
 
+  function confirmNew() {
+    return confirm("Clear everything and start a new report? Anything you haven’t saved will be lost.");
+  }
+
   // Confirm deletes. The name is read from a data- attribute (a safe HTML
   // attribute context) rather than interpolated into inline JS — so a
   // saved search named with quotes or script can't execute here.
   document.querySelectorAll(".delete-form").forEach(function (form) {
     form.addEventListener("submit", function (e) {
-      var name = form.dataset.name || "this search";
-      if (!confirm("Delete the saved search “" + name + "”?")) e.preventDefault();
+      var name = form.dataset.name || "this report";
+      if (!confirm("Delete the saved report “" + name + "”?")) e.preventDefault();
     });
   });
 

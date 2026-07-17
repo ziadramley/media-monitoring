@@ -365,30 +365,45 @@ def make_handler(
             self._redirect(f"/reports/{result.path.name}")
 
         def _save(self) -> None:
+            # Saving only needs a name — the searches can be empty or
+            # half-filled, so you can name and save a draft first and fill
+            # it in later. Whatever valid searches exist are stored; cards
+            # you started but left incomplete are reported, never dropped
+            # silently.
             fields = self._read_form()
             search_name = (fields.get("search_name", [""])[0] or "").strip()
-            queries, view, ok = build_cards(parse_cards(fields), publications)
-            if not ok:
-                self._render_editor(
-                    view or default_cards(publications), search_name, status=400,
-                    top_error="Please fix the highlighted search(es) before saving.",
-                )
-                return
+            queries, view, _ok = build_cards(parse_cards(fields), publications)
             if not slugify(search_name):
                 self._render_editor(
-                    view, search_name, status=400,
-                    top_error="Give the search a name (letters or numbers) before saving.",
+                    view or default_cards(publications), search_name, status=400,
+                    top_error="Give the report a name (letters or numbers) to save it.",
                 )
                 return
             try:
                 save_search(search_name, queries, searches_dir)
             except (ValueError, OSError) as exc:
-                self._render_editor(view, search_name, status=400, top_error=str(exc))
+                self._render_editor(view or default_cards(publications), search_name,
+                                    status=400, top_error=str(exc))
                 return
-            log.info("Saved search %r (%d section[s]).", search_name, len(queries))
-            state["cards"] = view
+
+            # A card is "incomplete" (worth flagging) if the user typed
+            # keywords but it still failed validation — e.g. no publication
+            # selected. A card with no keywords is just an empty slot.
+            incomplete = sum(1 for c in view if c["error"] and c["keywords"].strip())
+            n = len(queries)
+            if n == 0 and incomplete == 0:
+                flash = f'Saved “{search_name}” as an empty draft — add searches and save again.'
+            else:
+                flash = f'Saved “{search_name}” ({n} search{"es" if n != 1 else ""}).'
+                if incomplete:
+                    flash += (f' {incomplete} card{"s" if incomplete != 1 else ""} with no '
+                              f'publication selected {"were" if incomplete != 1 else "was"} left out.')
+            log.info("Saved report %r (%d search[es], %d incomplete).", search_name, n, incomplete)
+
+            # Store the cards without their error flags — the save succeeded.
+            state["cards"] = [{**c, "error": None} for c in view]
             state["search_name"] = search_name
-            state["flash"] = f'Saved “{search_name}”.'
+            state["flash"] = flash
             self._redirect("/")
 
         def _run_saved(self, slug: str) -> None:
@@ -400,6 +415,12 @@ def make_handler(
                 return
             state["cards"] = cards_from_queries(search.queries)
             state["search_name"] = search.name
+            if not search.queries:  # an empty draft — nothing to run yet
+                self._render_editor(
+                    default_cards(publications), search.name, status=200,
+                    top_error=f"“{search.name}” has no searches yet — add some, then Generate.",
+                )
+                return
             log.info("Running saved search %r.", search.name)
             try:
                 result = generate_report(search.queries, publications, reports_dir=reports_path)
