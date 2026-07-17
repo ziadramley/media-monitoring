@@ -60,7 +60,13 @@ def load_publications(path: str | Path) -> dict[str, Publication]:
                 f"Publication '{pub_id}' needs a 'feeds' list of one or more "
                 "http(s) feed URLs."
             )
-        publications[str(pub_id)] = Publication(id=str(pub_id), name=name, feeds=feeds)
+        region = entry.get("region")
+        publications[str(pub_id)] = Publication(
+            id=str(pub_id),
+            name=name,
+            feeds=feeds,
+            region=region if isinstance(region, str) else None,
+        )
     return publications
 
 

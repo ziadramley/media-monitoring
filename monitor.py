@@ -19,16 +19,8 @@ from datetime import datetime
 
 from monitoring.config import ConfigError, load_config
 from monitoring.constants import DEFAULT_CONFIG_PATH, DEFAULT_PUBLICATIONS_PATH
-from monitoring.fetcher import fetch_all
-from monitoring.matcher import filter_articles
-from monitoring.report import (
-    ReportSection,
-    make_range_label,
-    needs_depth_note,
-    open_in_browser,
-    render_html,
-    write_report,
-)
+from monitoring.pipeline import generate_report
+from monitoring.report import open_in_browser
 
 log = logging.getLogger("monitor")
 
@@ -59,39 +51,19 @@ def main(argv: list[str] | None = None) -> int:
         log.error("%s", exc)
         return 1
 
-    # Only fetch publications some query actually uses.
-    needed_ids = sorted({pub_id for q in queries for pub_id in q.publications})
-    needed = [publications[pub_id] for pub_id in needed_ids]
-
     started = datetime.now().astimezone()
-    articles_by_publication, fetch_results = fetch_all(needed)
+    result = generate_report(queries, publications, started)
 
-    sections: list[ReportSection] = []
-    for i, query in enumerate(queries, start=1):
-        matched = filter_articles(query, articles_by_publication, started)
-        log.info("Query %-30r %3d match(es)", query.name, len(matched))
-        sections.append(ReportSection(
-            name=query.name,
-            anchor=f"q{i}",
-            articles=matched,
-            range_label=make_range_label(query.date_range),
-            show_depth_note=needs_depth_note(query.date_range),
-            keywords=query.keywords,
-            match=query.match,
-        ))
-
-    failed = [r for r in fetch_results if not r.ok]
-    html = render_html(sections, failed, started)
-    path = write_report(html, started)
-
-    total = sum(len(s.articles) for s in sections)
     elapsed = (datetime.now().astimezone() - started).total_seconds()
-    log.info("Done in %.1fs: %d article(s) across %d section(s).", elapsed, total, len(sections))
+    log.info(
+        "Done in %.1fs: %d article(s) across %d section(s).",
+        elapsed, result.total_articles, len(result.sections),
+    )
 
     if args.no_open:
-        log.info("Report: %s", path.resolve())
+        log.info("Report: %s", result.path.resolve())
     else:
-        open_in_browser(path)
+        open_in_browser(result.path)
     return 0
 
 

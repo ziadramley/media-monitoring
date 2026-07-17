@@ -30,16 +30,40 @@ cd media-monitoring
 
 python3 -m venv .venv                      # a private sandbox for this tool
 .venv/bin/pip install -r requirements.txt  # three small libraries
+```
 
+> On Windows, the `.venv/bin/...` commands below are `.venv\Scripts\pip` and
+> `.venv\Scripts\python`.
+
+Now pick how you want to use it — there are two ways.
+
+### Two ways to run it
+
+**1. The control panel (easiest — no files to edit).** A page opens in your
+browser where you type keywords, pick a timeframe, tick which outlets to
+search, and click **Generate**. Good for quick, one-off searches.
+
+```bash
+.venv/bin/python webapp.py
+```
+
+Leave it running and come back to the browser tab whenever you want another
+search. Press `Ctrl+C` in the terminal to stop it.
+
+**2. Saved daily searches (for the same searches every morning).** Define
+your standing searches once in `config.yaml`, then run one command to get a
+report covering all of them at once.
+
+```bash
 .venv/bin/python monitor.py
 ```
 
-That's it — the report opens in your browser. The repo ships with three
-example searches that work out of the box; edit `config.yaml` to make them
-yours.
+The repo ships with three example searches that work out of the box; edit
+[config.yaml](config.yaml) to make them yours.
 
-> On Windows, the two `.venv/bin/...` commands are `.venv\Scripts\pip` and
-> `.venv\Scripts\python`.
+Both routes use the same engine and produce the same report — the control
+panel is just a friendlier front door for people who'd rather not touch a
+config file.
 
 ## Defining your searches
 
@@ -125,6 +149,8 @@ matters to you, run the tool once or twice a day and keep the reports — the
 
 ## Command-line options
 
+The saved-search runner (`monitor.py`):
+
 ```
 .venv/bin/python monitor.py                    # default run
 .venv/bin/python monitor.py --config my.yaml   # a different search file
@@ -132,16 +158,31 @@ matters to you, run the tool once or twice a day and keep the reports — the
 .venv/bin/python monitor.py --verbose          # per-feed parsing detail
 ```
 
+The control panel (`webapp.py`):
+
+```
+.venv/bin/python webapp.py                      # open the panel in your browser
+.venv/bin/python webapp.py --port 9000          # use a specific port
+.venv/bin/python webapp.py --no-open            # start the server without opening a browser
+```
+
+The control panel runs a small web server bound to `127.0.0.1` (your own
+machine only) — it is never reachable from your network or the internet.
+
 ## How it's put together
 
 ```
-monitor.py               orchestration only — the steps, in order
-monitoring/config.py     reads & validates the two YAML files
-monitoring/fetcher.py    fetches feeds concurrently (15s timeout, honest User-Agent)
-monitoring/parser.py     cleans feed entries: dates, HTML stripping, authors, URLs
-monitoring/matcher.py    applies your keywords and date windows (pure logic, unit-tested)
-monitoring/report.py     renders the report and its Markdown twin
-templates/report.html.j2 the report's entire appearance
+monitor.py                  saved-search runner — orchestration only
+webapp.py                   control-panel launcher — starts the local server
+monitoring/config.py        reads & validates the two YAML files
+monitoring/fetcher.py       fetches feeds concurrently (15s timeout, honest User-Agent)
+monitoring/parser.py        cleans feed entries: dates, HTML stripping, authors, URLs
+monitoring/matcher.py       applies your keywords and date windows (pure logic, unit-tested)
+monitoring/pipeline.py      the shared fetch → filter → render engine both entry points use
+monitoring/report.py        renders the report and its Markdown twin
+monitoring/webserver.py     the control panel's HTTP layer (form, generate, serve)
+templates/report.html.j2    the report's entire appearance
+templates/control_panel.html.j2  the control panel form
 ```
 
 Run the tests with `.venv/bin/python -m unittest`.

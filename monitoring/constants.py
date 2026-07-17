@@ -51,3 +51,9 @@ REPORT_FILENAME_FORMAT = "report_%Y-%m-%d_%H-%M-%S.html"
 # Default file names, relative to the working directory.
 DEFAULT_CONFIG_PATH = "config.yaml"
 DEFAULT_PUBLICATIONS_PATH = "publications.yaml"
+
+# Local control-panel web server (webapp.py). Binds to localhost only —
+# the panel is never reachable from your network or the internet.
+WEB_HOST = "127.0.0.1"
+WEB_DEFAULT_PORT = 8730
+WEB_PORT_SCAN_LIMIT = 20  # if the port is busy, try this many ports above it

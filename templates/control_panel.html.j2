@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Media Monitor — Build a report</title>
+<style>
+  :root {
+    --ink: #1a1a1a;
+    --ink-soft: #4a4a4a;
+    --ink-faint: #7a7a72;
+    --paper: #fbfaf7;
+    --field: #ffffff;
+    --rule: #ddd9d0;
+    --rule-ink: #1a1a1a;
+    --accent: #1a1a1a;
+    --error-bg: #f7e9e6;
+    --error-border: #c9a59c;
+    --note-bg: #f4f1ea;
+  }
+  * { box-sizing: border-box; }
+  html { font-size: 17px; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: Georgia, "Times New Roman", Times, serif;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .sheet { max-width: 42rem; margin: 0 auto; padding: 2.6rem 1.4rem 4rem; }
+
+  .smallcaps {
+    text-transform: uppercase;
+    letter-spacing: 0.13em;
+    font-size: 0.72rem;
+    color: var(--ink-soft);
+  }
+
+  header.masthead {
+    text-align: center;
+    border-bottom: 4px double var(--rule-ink);
+    padding-bottom: 1.2rem;
+    margin-bottom: 1.6rem;
+  }
+  header.masthead h1 { margin: 0 0 0.3rem; font-size: 2.4rem; font-weight: 700; }
+  header.masthead p { margin: 0; font-style: italic; color: var(--ink-faint); }
+
+  .error {
+    background: var(--error-bg);
+    border: 1px solid var(--error-border);
+    border-radius: 2px;
+    padding: 0.7rem 1rem;
+    margin-bottom: 1.6rem;
+    color: #7a2e22;
+  }
+
+  .field { margin-bottom: 1.7rem; }
+  .field > label.q, legend.q {
+    display: block;
+    font-weight: 700;
+    font-size: 1.02rem;
+    margin-bottom: 0.15rem;
+  }
+  .hint { margin: 0 0 0.5rem; font-size: 0.82rem; color: var(--ink-faint); font-style: italic; }
+
+  input[type="text"], textarea, select {
+    width: 100%;
+    font-family: Georgia, serif;
+    font-size: 1rem;
+    color: var(--ink);
+    background: var(--field);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 0.55rem 0.65rem;
+  }
+  input[type="text"]:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--ink-soft);
+  }
+  textarea { min-height: 3.2rem; resize: vertical; }
+
+  .radios { display: flex; gap: 1.4rem; margin-top: 0.2rem; }
+  .radios label, fieldset label { font-size: 0.95rem; cursor: pointer; }
+  .radios input, fieldset input { margin-right: 0.4rem; }
+
+  fieldset {
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 0.7rem 0.9rem 0.9rem;
+    margin: 0 0 1rem;
+  }
+  legend.q { padding: 0 0.4rem; }
+  .group-toggle {
+    font-family: Georgia, serif;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-faint);
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 0 0 0 0.5rem;
+  }
+  .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem 1rem; margin-top: 0.5rem; }
+  .checks label { display: flex; align-items: baseline; }
+
+  .actions { border-top: 1px solid var(--rule); padding-top: 1.5rem; }
+  button.generate {
+    font-family: Georgia, serif;
+    font-size: 1.05rem;
+    color: var(--paper);
+    background: var(--accent);
+    border: none;
+    border-radius: 3px;
+    padding: 0.7em 1.8em;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+  }
+  button.generate:hover { background: #000; }
+
+  .footnote { margin-top: 2rem; font-size: 0.8rem; color: var(--ink-faint); font-style: italic; text-align: center; line-height: 1.6; }
+  .footnote code { font-style: normal; font-size: 0.76rem; }
+
+  /* Loading overlay shown while feeds are fetched (10–20s) */
+  #overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(251, 250, 247, 0.94);
+    z-index: 10;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+  }
+  #overlay h2 { font-size: 1.6rem; margin: 0 0 0.6rem; }
+  #overlay p { color: var(--ink-soft); font-style: italic; max-width: 26rem; }
+  .spinner {
+    width: 2rem; height: 2rem;
+    margin-bottom: 1.4rem;
+    border: 3px solid var(--rule);
+    border-top-color: var(--ink);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 34rem) {
+    .checks { grid-template-columns: 1fr; }
+    .radios { flex-direction: column; gap: 0.5rem; }
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <header class="masthead">
+    <h1>Media Monitor</h1>
+    <p>Build a report from today’s headlines</p>
+  </header>
+
+  {% if error %}<div class="error">{{ error }}</div>{% endif %}
+
+  <form method="post" action="/generate" onsubmit="showLoading()">
+
+    <div class="field">
+      <label class="q" for="keywords">Keywords or phrases</label>
+      <p class="hint">Separate with commas. Multi-word entries match as an exact phrase (“spending review”). Case doesn’t matter.</p>
+      <textarea id="keywords" name="keywords" placeholder="budget, spending review, fiscal">{{ form.keywords }}</textarea>
+    </div>
+
+    <div class="field">
+      <span class="q">Match</span>
+      <div class="radios">
+        <label><input type="radio" name="match" value="any" {% if form.match != 'all' %}checked{% endif %}>Any keyword (broader)</label>
+        <label><input type="radio" name="match" value="all" {% if form.match == 'all' %}checked{% endif %}>All keywords (narrower)</label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="q" for="date_range">Timeframe</label>
+      <select id="date_range" name="date_range">
+        {% for value, label in date_ranges %}
+        <option value="{{ value }}" {% if value == form.date_range %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="field">
+      <span class="q">Publications</span>
+      <p class="hint">Choose which outlets to search.</p>
+      {% for region_label, pubs in grouped_publications %}
+      <fieldset>
+        <legend class="q">{{ region_label }}<button type="button" class="group-toggle" onclick="toggleGroup(this)">all / none</button></legend>
+        <div class="checks">
+          {% for pub in pubs %}
+          <label><input type="checkbox" name="publications" value="{{ pub.id }}" {% if pub.id in selected_pubs %}checked{% endif %}>{{ pub.name }}</label>
+          {% endfor %}
+        </div>
+      </fieldset>
+      {% endfor %}
+    </div>
+
+    <div class="field">
+      <label class="q" for="name">Report heading <span style="font-weight:400;color:var(--ink-faint)">(optional)</span></label>
+      <p class="hint">The heading for this search in the report. Defaults to “Search results”.</p>
+      <input type="text" id="name" name="name" value="{{ form.name }}" placeholder="e.g. Budget coverage">
+    </div>
+
+    <div class="actions">
+      <button type="submit" class="generate">Generate report</button>
+    </div>
+  </form>
+
+  <p class="footnote">
+    Runs entirely on your machine — only the outlets’ RSS feeds are contacted.<br>
+    For searches you run every day, save them in <code>config.yaml</code> and use <code>python monitor.py</code>.
+  </p>
+
+</div>
+
+<div id="overlay">
+  <div class="spinner"></div>
+  <h2>Generating your report…</h2>
+  <p>Fetching the latest headlines from each outlet. This usually takes 10–20 seconds.</p>
+</div>
+
+<script>
+  function showLoading() {
+    document.getElementById("overlay").style.display = "flex";
+  }
+  // "all / none" toggle for each publication group.
+  function toggleGroup(button) {
+    var boxes = button.closest("fieldset").querySelectorAll('input[type="checkbox"]');
+    var anyUnchecked = Array.prototype.some.call(boxes, function (b) { return !b.checked; });
+    boxes.forEach(function (b) { b.checked = anyUnchecked; });
+  }
+</script>
+</body>
+</html>

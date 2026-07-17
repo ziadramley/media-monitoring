@@ -17,6 +17,7 @@ class Publication:
     id: str
     name: str
     feeds: list[str]
+    region: str | None = None  # e.g. "UK" / "US"; groups outlets in the control panel
 
 
 @dataclass

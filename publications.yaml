@@ -8,6 +8,7 @@
 #
 #   my_outlet:
 #     name: My Outlet
+#     region: UK          # optional: groups the outlet in the control panel
 #     feeds:
 #       - https://example.com/rss.xml
 #
@@ -21,6 +22,7 @@ publications:
   # ---------------------------------------------------------- UK ----
   bbc:
     name: BBC News
+    region: UK
     feeds:
       - https://feeds.bbci.co.uk/news/rss.xml
       - https://feeds.bbci.co.uk/news/uk/rss.xml
@@ -28,12 +30,14 @@ publications:
 
   guardian:
     name: The Guardian
+    region: UK
     feeds:
       - https://www.theguardian.com/uk/rss
       - https://www.theguardian.com/politics/rss
 
   sky:
     name: Sky News
+    region: UK
     feeds:
       - https://feeds.skynews.com/feeds/rss/home.xml
       - https://feeds.skynews.com/feeds/rss/uk.xml
@@ -41,6 +45,7 @@ publications:
 
   telegraph:
     name: The Telegraph
+    region: UK
     # Note: the Telegraph sits behind aggressive bot protection and may
     # intermittently refuse requests (HTTP 403). The tool logs a warning
     # and carries on when that happens.
@@ -49,18 +54,21 @@ publications:
 
   ft:
     name: Financial Times
+    region: UK
     feeds:
       - https://www.ft.com/rss/home/uk
       - https://www.ft.com/news-feed?format=rss
 
   independent:
     name: The Independent
+    region: UK
     feeds:
       - https://www.independent.co.uk/rss
       - https://www.independent.co.uk/news/uk/rss
 
   dailymail:
     name: Daily Mail
+    region: UK
     # The old dailymail.co.uk feed URLs now redirect here.
     feeds:
       - https://www.dailymail.com/home/index.rss
@@ -68,6 +76,7 @@ publications:
 
   politico_eu:
     name: Politico Europe
+    region: UK
     # Includes the London Playbook newsletter feed (two editions
     # per weekday).
     feeds:
@@ -77,12 +86,14 @@ publications:
   # ---------------------------------------------------------- US ----
   nyt:
     name: The New York Times
+    region: US
     feeds:
       - https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml
       - https://rss.nytimes.com/services/xml/rss/nyt/World.xml
 
   wapo:
     name: The Washington Post
+    region: US
     # WaPo's individual feeds are small (4–8 items each), so three
     # sections are merged for reasonable coverage.
     feeds:
@@ -92,22 +103,26 @@ publications:
 
   politico_us:
     name: Politico
+    region: US
     feeds:
       - https://www.politico.com/rss/politicopicks.xml
       - https://rss.politico.com/politics-news.xml
 
   axios:
     name: Axios
+    region: US
     feeds:
       - https://api.axios.com/feed/
 
   nbc:
     name: NBC News
+    region: US
     feeds:
       - https://feeds.nbcnews.com/nbcnews/public/news
 
   wsj:
     name: The Wall Street Journal
+    region: US
     # WSJ moved its feeds to the Dow Jones CDN. The old feeds.a.dj.com
     # URLs still respond but have been frozen since January 2025 —
     # don't use them.
