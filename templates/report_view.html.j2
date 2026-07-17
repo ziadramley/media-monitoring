@@ -48,8 +48,10 @@
   .widget.errors code { font-size: 0.76rem; word-break: break-all; }
 
   @media (min-width: 78rem) {
-    .report-widgets { position: fixed; top: 6.5rem; left: calc(50% + 23rem); width: 13.5rem;
-      margin: 0; max-height: calc(100vh - 8rem); overflow-y: auto; }
+    /* `top`/`max-height` are set precisely by JS to line the top widget up
+       with the rule under the action bar; these are just pre-script fallbacks. */
+    .report-widgets { position: fixed; top: 9rem; left: calc(50% + 23rem); width: 13.5rem;
+      margin: 0; max-height: calc(100vh - 10rem); overflow-y: auto; }
   }
 {% endblock %}
 
@@ -105,5 +107,24 @@
     a.remove();
     URL.revokeObjectURL(url);
   }
+
+  // Align the top of the floated widgets with the rule under the action bar.
+  // Only when they're floated (wide screens); on narrow screens they sit
+  // inline and these overrides are cleared.
+  function positionWidgets() {
+    var widgets = document.querySelector(".report-widgets");
+    var nav = document.querySelector(".section-nav");
+    if (!widgets || !nav) return;
+    if (window.matchMedia("(min-width: 78rem)").matches) {
+      var top = Math.round(nav.getBoundingClientRect().bottom + window.scrollY);
+      widgets.style.top = top + "px";
+      widgets.style.maxHeight = "calc(100vh - " + (top + 24) + "px)";
+    } else {
+      widgets.style.top = "";
+      widgets.style.maxHeight = "";
+    }
+  }
+  window.addEventListener("resize", positionWidgets);
+  positionWidgets();
 </script>
 {% endblock %}
