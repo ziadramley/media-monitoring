@@ -48,6 +48,10 @@ TRACKING_PARAM_NAMES = {"fbclid", "gclid", "cmp", "cmpid", "ito", "icid"}
 REPORTS_DIR = "reports"
 REPORT_FILENAME_FORMAT = "report_%Y-%m-%d_%H-%M-%S.html"
 
+# Where the control panel saves named searches (one YAML file each).
+# Personal working data — gitignored like reports/.
+SEARCHES_DIR = "searches"
+
 # Default file names, relative to the working directory.
 DEFAULT_CONFIG_PATH = "config.yaml"
 DEFAULT_PUBLICATIONS_PATH = "publications.yaml"

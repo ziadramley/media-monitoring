@@ -6,151 +6,112 @@
 <title>Media Monitor — Build a report</title>
 <style>
   :root {
-    --ink: #1a1a1a;
-    --ink-soft: #4a4a4a;
-    --ink-faint: #7a7a72;
-    --paper: #fbfaf7;
-    --field: #ffffff;
-    --rule: #ddd9d0;
-    --rule-ink: #1a1a1a;
-    --accent: #1a1a1a;
-    --error-bg: #f7e9e6;
-    --error-border: #c9a59c;
-    --note-bg: #f4f1ea;
+    --ink: #1a1a1a; --ink-soft: #4a4a4a; --ink-faint: #7a7a72;
+    --paper: #fbfaf7; --field: #ffffff; --rule: #ddd9d0; --rule-ink: #1a1a1a;
+    --accent: #1a1a1a; --error-bg: #f7e9e6; --error-border: #c9a59c; --error-ink: #7a2e22;
+    --ok-bg: #eaf1e8; --ok-border: #a9c3a0; --note-bg: #f4f1ea; --card-bg: #fdfcfa;
   }
   * { box-sizing: border-box; }
   html { font-size: 17px; }
-  body {
-    margin: 0;
-    background: var(--paper);
-    color: var(--ink);
-    font-family: Georgia, "Times New Roman", Times, serif;
-    line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
-  }
-  .sheet { max-width: 42rem; margin: 0 auto; padding: 2.6rem 1.4rem 4rem; }
+  body { margin: 0; background: var(--paper); color: var(--ink);
+    font-family: Georgia, "Times New Roman", Times, serif; line-height: 1.5;
+    -webkit-font-smoothing: antialiased; }
+  .sheet { max-width: 44rem; margin: 0 auto; padding: 2.4rem 1.4rem 4rem; }
+  .smallcaps { text-transform: uppercase; letter-spacing: 0.13em; font-size: 0.72rem; color: var(--ink-soft); }
 
-  .smallcaps {
-    text-transform: uppercase;
-    letter-spacing: 0.13em;
-    font-size: 0.72rem;
-    color: var(--ink-soft);
-  }
-
-  header.masthead {
-    text-align: center;
-    border-bottom: 4px double var(--rule-ink);
-    padding-bottom: 1.2rem;
-    margin-bottom: 1.6rem;
-  }
-  header.masthead h1 { margin: 0 0 0.3rem; font-size: 2.4rem; font-weight: 700; }
+  header.masthead { text-align: center; border-bottom: 4px double var(--rule-ink);
+    padding-bottom: 1.1rem; margin-bottom: 1.4rem; }
+  header.masthead h1 { margin: 0 0 0.3rem; font-size: 2.3rem; font-weight: 700; }
   header.masthead p { margin: 0; font-style: italic; color: var(--ink-faint); }
 
-  .error {
-    background: var(--error-bg);
-    border: 1px solid var(--error-border);
-    border-radius: 2px;
-    padding: 0.7rem 1rem;
-    margin-bottom: 1.6rem;
-    color: #7a2e22;
-  }
+  .banner { border-radius: 2px; padding: 0.7rem 1rem; margin-bottom: 1.4rem; }
+  .banner.error { background: var(--error-bg); border: 1px solid var(--error-border); color: var(--error-ink); }
+  .banner.ok { background: var(--ok-bg); border: 1px solid var(--ok-border); color: #2f5227; }
 
-  .field { margin-bottom: 1.7rem; }
-  .field > label.q, legend.q {
-    display: block;
-    font-weight: 700;
-    font-size: 1.02rem;
-    margin-bottom: 0.15rem;
-  }
-  .hint { margin: 0 0 0.5rem; font-size: 0.82rem; color: var(--ink-faint); font-style: italic; }
+  /* Saved searches strip */
+  .saved { margin-bottom: 2rem; }
+  .saved h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--ink-soft); border-bottom: 1px solid var(--rule); padding-bottom: 0.4rem; margin: 0 0 0.6rem; }
+  .saved ul { list-style: none; margin: 0; padding: 0; }
+  .saved li { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.2rem 0.7rem;
+    padding: 0.4rem 0; border-bottom: 1px solid var(--rule); }
+  .saved li:last-child { border-bottom: none; }
+  .saved .s-name { font-weight: 700; }
+  .saved .s-count { font-size: 0.78rem; color: var(--ink-faint); font-style: italic; margin-right: auto; }
+  .saved a, .saved button.link { font-size: 0.8rem; color: var(--ink-soft); background: none;
+    border: none; cursor: pointer; text-decoration: underline; padding: 0; font-family: Georgia, serif; }
+  .saved a:hover, .saved button.link:hover { color: var(--ink); }
+  .saved form.inline { display: inline; margin: 0; }
+  .saved li.config .s-name { font-weight: 400; font-style: italic; color: var(--ink-soft); }
 
-  input[type="text"], textarea, select {
-    width: 100%;
-    font-family: Georgia, serif;
-    font-size: 1rem;
-    color: var(--ink);
-    background: var(--field);
-    border: 1px solid var(--rule);
-    border-radius: 3px;
-    padding: 0.55rem 0.65rem;
-  }
-  input[type="text"]:focus, textarea:focus, select:focus {
-    outline: none;
-    border-color: var(--ink-soft);
-  }
-  textarea { min-height: 3.2rem; resize: vertical; }
+  /* Search cards */
+  .search-card { border: 1px solid var(--rule); border-radius: 4px; background: var(--card-bg);
+    padding: 1.1rem 1.2rem 1.3rem; margin-bottom: 1.1rem; }
+  .search-card > .card-head { display: flex; align-items: baseline; justify-content: space-between;
+    border-bottom: 1px solid var(--rule); padding-bottom: 0.5rem; margin-bottom: 1rem; }
+  .card-head h3 { margin: 0; font-size: 1.05rem; }
+  .card-head h3 .card-number { color: var(--ink-faint); }
+  .remove-card { font-family: Georgia, serif; font-size: 0.74rem; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--ink-faint); background: none; border: none; cursor: pointer;
+    text-decoration: underline; }
+  .remove-card:hover { color: var(--error-ink); }
 
-  .radios { display: flex; gap: 1.4rem; margin-top: 0.2rem; }
-  .radios label, fieldset label { font-size: 0.95rem; cursor: pointer; }
-  .radios input, fieldset input { margin-right: 0.4rem; }
+  .card-error { background: var(--error-bg); border: 1px solid var(--error-border); color: var(--error-ink);
+    border-radius: 2px; padding: 0.4rem 0.7rem; margin-bottom: 0.9rem; font-size: 0.85rem; }
 
-  fieldset {
-    border: 1px solid var(--rule);
-    border-radius: 3px;
-    padding: 0.7rem 0.9rem 0.9rem;
-    margin: 0 0 1rem;
-  }
+  .field { margin-bottom: 1.3rem; }
+  .field:last-child { margin-bottom: 0; }
+  .field > label.q, .field > span.q, legend.q { display: block; font-weight: 700; font-size: 0.98rem; margin-bottom: 0.12rem; }
+  .hint { margin: 0 0 0.45rem; font-size: 0.8rem; color: var(--ink-faint); font-style: italic; }
+
+  input[type="text"], textarea, select { width: 100%; font-family: Georgia, serif; font-size: 1rem;
+    color: var(--ink); background: var(--field); border: 1px solid var(--rule); border-radius: 3px;
+    padding: 0.5rem 0.6rem; }
+  input[type="text"]:focus, textarea:focus, select:focus { outline: none; border-color: var(--ink-soft); }
+  textarea { min-height: 2.9rem; resize: vertical; }
+
+  .radios { display: flex; gap: 1.3rem; margin-top: 0.15rem; }
+  .radios label, fieldset label { font-size: 0.94rem; cursor: pointer; }
+  .radios input, fieldset input { margin-right: 0.35rem; }
+
+  fieldset { border: 1px solid var(--rule); border-radius: 3px; padding: 0.6rem 0.8rem 0.8rem; margin: 0 0 0.8rem; }
   legend.q { padding: 0 0.4rem; }
-  .group-toggle {
-    font-family: Georgia, serif;
-    font-size: 0.68rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--ink-faint);
-    background: none;
-    border: none;
-    cursor: pointer;
-    text-decoration: underline;
-    padding: 0 0 0 0.5rem;
-  }
-  .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem 1rem; margin-top: 0.5rem; }
+  .group-toggle { font-family: Georgia, serif; font-size: 0.66rem; text-transform: uppercase;
+    letter-spacing: 0.1em; color: var(--ink-faint); background: none; border: none; cursor: pointer;
+    text-decoration: underline; padding: 0 0 0 0.5rem; }
+  .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 0.3rem 1rem; margin-top: 0.45rem; }
   .checks label { display: flex; align-items: baseline; }
 
-  .actions { border-top: 1px solid var(--rule); padding-top: 1.5rem; }
-  button.generate {
-    font-family: Georgia, serif;
-    font-size: 1.05rem;
-    color: var(--paper);
-    background: var(--accent);
-    border: none;
-    border-radius: 3px;
-    padding: 0.7em 1.8em;
-    cursor: pointer;
-    letter-spacing: 0.02em;
-  }
-  button.generate:hover { background: #000; }
+  .add-card { width: 100%; font-family: Georgia, serif; font-size: 0.95rem; color: var(--ink-soft);
+    background: none; border: 1px dashed var(--rule); border-radius: 4px; padding: 0.7rem; cursor: pointer;
+    margin-bottom: 1.6rem; }
+  .add-card:hover { border-color: var(--ink-soft); color: var(--ink); }
 
-  .footnote { margin-top: 2rem; font-size: 0.8rem; color: var(--ink-faint); font-style: italic; text-align: center; line-height: 1.6; }
+  .actions { border-top: 1px solid var(--rule); padding-top: 1.5rem; }
+  button.generate { font-family: Georgia, serif; font-size: 1.05rem; color: var(--paper);
+    background: var(--accent); border: none; border-radius: 3px; padding: 0.7em 1.8em; cursor: pointer; }
+  button.generate:hover { background: #000; }
+  .save-row { display: flex; gap: 0.6rem; align-items: center; margin-top: 1.3rem;
+    padding-top: 1.2rem; border-top: 1px dotted var(--rule); flex-wrap: wrap; }
+  .save-row label { font-size: 0.85rem; color: var(--ink-soft); }
+  .save-row input { flex: 1; min-width: 12rem; }
+  button.save { font-family: Georgia, serif; font-size: 0.92rem; color: var(--ink); background: none;
+    border: 1px solid var(--rule-ink); border-radius: 3px; padding: 0.5em 1.1em; cursor: pointer; }
+  button.save:hover { background: var(--note-bg); }
+
+  .footnote { margin-top: 2rem; font-size: 0.8rem; color: var(--ink-faint); font-style: italic;
+    text-align: center; line-height: 1.6; }
   .footnote code { font-style: normal; font-size: 0.76rem; }
 
-  /* Loading overlay shown while feeds are fetched (10–20s) */
-  #overlay {
-    display: none;
-    position: fixed; inset: 0;
-    background: rgba(251, 250, 247, 0.94);
-    z-index: 10;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 2rem;
-  }
+  #overlay { display: none; position: fixed; inset: 0; background: rgba(251,250,247,0.94); z-index: 10;
+    flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2rem; }
   #overlay h2 { font-size: 1.6rem; margin: 0 0 0.6rem; }
   #overlay p { color: var(--ink-soft); font-style: italic; max-width: 26rem; }
-  .spinner {
-    width: 2rem; height: 2rem;
-    margin-bottom: 1.4rem;
-    border: 3px solid var(--rule);
-    border-top-color: var(--ink);
-    border-radius: 50%;
-    animation: spin 0.9s linear infinite;
-  }
+  .spinner { width: 2rem; height: 2rem; margin-bottom: 1.4rem; border: 3px solid var(--rule);
+    border-top-color: var(--ink); border-radius: 50%; animation: spin 0.9s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  @media (max-width: 34rem) {
-    .checks { grid-template-columns: 1fr; }
-    .radios { flex-direction: column; gap: 0.5rem; }
-  }
+  @media (max-width: 34rem) { .checks { grid-template-columns: 1fr; } .radios { flex-direction: column; gap: 0.5rem; } }
 </style>
 </head>
 <body>
@@ -161,42 +122,76 @@
     <p>Build a report from today’s headlines</p>
   </header>
 
-  {% if error %}<div class="error">{{ error }}</div>{% endif %}
+  {% if flash %}<div class="banner ok">{{ flash }}</div>{% endif %}
+  {% if top_error %}<div class="banner error">{{ top_error }}</div>{% endif %}
 
-  <form method="post" action="/generate" onsubmit="showLoading()">
+  {% if saved_searches or config_search %}
+  <section class="saved">
+    <h2>Saved searches</h2>
+    <ul>
+      {% for s in saved_searches %}
+      <li>
+        <span class="s-name">{{ s.name }}</span>
+        <span class="s-count">{{ s.queries|length }} search{{ "es" if s.queries|length != 1 }}</span>
+        <a href="/run/{{ s.slug }}">Run</a>
+        <a href="/edit/{{ s.slug }}">Edit</a>
+        <form class="inline delete-form" method="post" action="/delete/{{ s.slug }}" data-name="{{ s.name }}">
+          <button type="submit" class="link">Delete</button>
+        </form>
+      </li>
+      {% endfor %}
+      {% if config_search %}
+      <li class="config">
+        <span class="s-name">{{ config_search.name }}</span>
+        <span class="s-count">{{ config_search.queries|length }} search{{ "es" if config_search.queries|length != 1 }} · read-only</span>
+        <a href="/edit-config">Load into editor</a>
+      </li>
+      {% endif %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {% set default_range = date_ranges[0][0] %}
+
+  {%- macro render_card(c) -%}
+  <div class="search-card" data-token="{{ c.token }}">
+    <div class="card-head">
+      <h3>Search <span class="card-number"></span></h3>
+      <button type="button" class="remove-card" onclick="removeCard(this)">remove</button>
+    </div>
+    {% if c.error %}<div class="card-error">{{ c.error }}</div>{% endif %}
 
     <div class="field">
-      <label class="q" for="keywords">Keywords or phrases</label>
+      <label class="q">Keywords or phrases</label>
       <p class="hint">Separate with commas. Multi-word entries match as an exact phrase (“spending review”). Case doesn’t matter.</p>
-      <textarea id="keywords" name="keywords" placeholder="budget, spending review, fiscal">{{ form.keywords }}</textarea>
+      <textarea name="keywords__{{ c.token }}" placeholder="budget, spending review, fiscal">{{ c.keywords }}</textarea>
     </div>
 
     <div class="field">
       <span class="q">Match</span>
       <div class="radios">
-        <label><input type="radio" name="match" value="any" {% if form.match != 'all' %}checked{% endif %}>Any keyword (broader)</label>
-        <label><input type="radio" name="match" value="all" {% if form.match == 'all' %}checked{% endif %}>All keywords (narrower)</label>
+        <label><input type="radio" name="match__{{ c.token }}" value="any" {% if c.match != 'all' %}checked{% endif %}>Any keyword (broader)</label>
+        <label><input type="radio" name="match__{{ c.token }}" value="all" {% if c.match == 'all' %}checked{% endif %}>All keywords (narrower)</label>
       </div>
     </div>
 
     <div class="field">
-      <label class="q" for="date_range">Timeframe</label>
-      <select id="date_range" name="date_range">
+      <label class="q">Timeframe</label>
+      <select name="date_range__{{ c.token }}">
         {% for value, label in date_ranges %}
-        <option value="{{ value }}" {% if value == form.date_range %}selected{% endif %}>{{ label }}</option>
+        <option value="{{ value }}" {% if value == c.date_range %}selected{% endif %}>{{ label }}</option>
         {% endfor %}
       </select>
     </div>
 
     <div class="field">
       <span class="q">Publications</span>
-      <p class="hint">Choose which outlets to search.</p>
       {% for region_label, pubs in grouped_publications %}
       <fieldset>
         <legend class="q">{{ region_label }}<button type="button" class="group-toggle" onclick="toggleGroup(this)">all / none</button></legend>
         <div class="checks">
           {% for pub in pubs %}
-          <label><input type="checkbox" name="publications" value="{{ pub.id }}" {% if pub.id in selected_pubs %}checked{% endif %}>{{ pub.name }}</label>
+          <label><input type="checkbox" name="publications__{{ c.token }}" value="{{ pub.id }}" {% if pub.id in c.selected %}checked{% endif %}>{{ pub.name }}</label>
           {% endfor %}
         </div>
       </fieldset>
@@ -204,22 +199,45 @@
     </div>
 
     <div class="field">
-      <label class="q" for="name">Report heading <span style="font-weight:400;color:var(--ink-faint)">(optional)</span></label>
-      <p class="hint">The heading for this search in the report. Defaults to “Search results”.</p>
-      <input type="text" id="name" name="name" value="{{ form.name }}" placeholder="e.g. Budget coverage">
+      <label class="q">Section heading <span style="font-weight:400;color:var(--ink-faint)">(optional)</span></label>
+      <input type="text" name="name__{{ c.token }}" value="{{ c.name }}" placeholder="e.g. Budget coverage">
+    </div>
+  </div>
+  {%- endmacro -%}
+
+  <form method="post" id="search-form">
+    <input type="hidden" name="card_order" id="card_order" value="">
+
+    <div id="cards">
+      {% for c in cards %}{{ render_card(c) }}{% endfor %}
     </div>
 
+    <button type="button" class="add-card" onclick="addCard()">+ Add another search</button>
+
     <div class="actions">
-      <button type="submit" class="generate">Generate report</button>
+      <button type="submit" formaction="/generate" class="generate" onclick="showLoading()">Generate report</button>
+
+      <div class="save-row">
+        <label for="search_name">Save as</label>
+        <input type="text" id="search_name" name="search_name" value="{{ search_name }}" placeholder="e.g. Morning briefing">
+        <button type="submit" formaction="/save" class="save">Save search</button>
+      </div>
     </div>
   </form>
 
   <p class="footnote">
     Runs entirely on your machine — only the outlets’ RSS feeds are contacted.<br>
-    For searches you run every day, save them in <code>config.yaml</code> and use <code>python monitor.py</code>.
+    Saved searches live in the <code>searches/</code> folder and also work from the command line:
+    <code>python monitor.py --config searches/your-search.yaml</code>
   </p>
 
 </div>
+
+<!-- Template for a fresh card, cloned by "Add another search". -->
+<template id="card-template">
+  {{ render_card({'token': '__TOKEN__', 'name': '', 'keywords': '', 'match': 'any',
+                  'date_range': default_range, 'selected': all_pub_ids, 'error': none}) }}
+</template>
 
 <div id="overlay">
   <div class="spinner"></div>
@@ -228,15 +246,68 @@
 </div>
 
 <script>
-  function showLoading() {
-    document.getElementById("overlay").style.display = "flex";
+  var cardsEl = document.getElementById("cards");
+
+  function renumber() {
+    var cards = cardsEl.querySelectorAll(".search-card");
+    cards.forEach(function (card, i) {
+      card.querySelector(".card-number").textContent = i + 1;
+      // Hide "remove" when only one card remains.
+      card.querySelector(".remove-card").style.visibility = cards.length > 1 ? "visible" : "hidden";
+    });
   }
-  // "all / none" toggle for each publication group.
+
+  function nextToken() {
+    var max = -1;
+    cardsEl.querySelectorAll(".search-card").forEach(function (c) {
+      var n = parseInt(c.dataset.token, 10);
+      if (!isNaN(n)) max = Math.max(max, n);
+    });
+    return String(max + 1);
+  }
+
+  function addCard() {
+    var html = document.getElementById("card-template").innerHTML;
+    var token = nextToken();
+    cardsEl.insertAdjacentHTML("beforeend", html.split("__TOKEN__").join(token));
+    renumber();
+    cardsEl.lastElementChild.querySelector("textarea").focus();
+  }
+
+  function removeCard(button) {
+    if (cardsEl.querySelectorAll(".search-card").length <= 1) return;
+    button.closest(".search-card").remove();
+    renumber();
+  }
+
   function toggleGroup(button) {
     var boxes = button.closest("fieldset").querySelectorAll('input[type="checkbox"]');
     var anyUnchecked = Array.prototype.some.call(boxes, function (b) { return !b.checked; });
     boxes.forEach(function (b) { b.checked = anyUnchecked; });
   }
+
+  function showLoading() {
+    document.getElementById("overlay").style.display = "flex";
+  }
+
+  // Confirm deletes. The name is read from a data- attribute (a safe HTML
+  // attribute context) rather than interpolated into inline JS — so a
+  // saved search named with quotes or script can't execute here.
+  document.querySelectorAll(".delete-form").forEach(function (form) {
+    form.addEventListener("submit", function (e) {
+      var name = form.dataset.name || "this search";
+      if (!confirm("Delete the saved search “" + name + "”?")) e.preventDefault();
+    });
+  });
+
+  // Record the visual order of cards so the server rebuilds sections in order.
+  document.getElementById("search-form").addEventListener("submit", function () {
+    var tokens = [];
+    cardsEl.querySelectorAll(".search-card").forEach(function (c) { tokens.push(c.dataset.token); });
+    document.getElementById("card_order").value = tokens.join(",");
+  });
+
+  renumber();
 </script>
 </body>
 </html>

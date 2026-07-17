@@ -22,7 +22,10 @@ import webbrowser
 
 from monitoring.config import ConfigError, load_publications
 from monitoring.constants import (
+    DEFAULT_CONFIG_PATH,
     DEFAULT_PUBLICATIONS_PATH,
+    REPORTS_DIR,
+    SEARCHES_DIR,
     WEB_DEFAULT_PORT,
     WEB_HOST,
 )
@@ -37,6 +40,8 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--publications", default=DEFAULT_PUBLICATIONS_PATH,
                         help="path to the publication registry (default: publications.yaml)")
+    parser.add_argument("--config", default=DEFAULT_CONFIG_PATH,
+                        help="config.yaml to offer as a loadable starting point (default: config.yaml)")
     parser.add_argument("--port", type=int, default=WEB_DEFAULT_PORT,
                         help=f"port to serve on (default: {WEB_DEFAULT_PORT})")
     parser.add_argument("--no-open", action="store_true",
@@ -52,7 +57,12 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     try:
-        server, port = create_server(publications, args.port)
+        server, port = create_server(
+            publications, args.port,
+            reports_dir=REPORTS_DIR,
+            searches_dir=SEARCHES_DIR,
+            config_path=args.config,
+        )
     except OSError as exc:
         log.error("%s", exc)
         return 1

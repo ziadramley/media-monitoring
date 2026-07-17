@@ -1,6 +1,9 @@
 # Generated reports — output only, never committed
 reports/
 
+# Saved searches from the control panel — personal working data
+searches/
+
 # Python
 __pycache__/
 *.pyc

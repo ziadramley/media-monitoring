@@ -25,7 +25,15 @@ def _load_yaml(path: str | Path, what: str) -> dict:
             f"folder? (Expected a file called '{p.name}' there.)"
         )
     try:
-        data = yaml.safe_load(p.read_text(encoding="utf-8"))
+        text = p.read_text(encoding="utf-8")
+    except UnicodeDecodeError as exc:
+        raise ConfigError(
+            f"'{p}' isn't a UTF-8 text file — please save it as plain UTF-8."
+        ) from exc
+    except OSError as exc:
+        raise ConfigError(f"'{p}' could not be read: {exc}") from exc
+    try:
+        data = yaml.safe_load(text)
     except yaml.YAMLError as exc:
         raise ConfigError(
             f"'{p}' isn't valid YAML: {exc}\n"
@@ -78,7 +86,16 @@ def load_queries(path: str | Path, publications: dict[str, Publication]) -> list
             f"'{path}' must have a top-level 'queries:' list with at least "
             "one query. See config.yaml in the repo for a working example."
         )
+    return build_queries(raw, publications)
 
+
+def build_queries(raw: list, publications: dict[str, Publication]) -> list[Query]:
+    """Validate a list of raw query mappings into Query objects.
+
+    Shared by config.yaml loading and saved-search loading, so both go
+    through exactly the same validation rules. Raises ConfigError with a
+    plain-English message on the first problem.
+    """
     valid_ids = sorted(publications)
     queries: list[Query] = []
     for i, entry in enumerate(raw, start=1):

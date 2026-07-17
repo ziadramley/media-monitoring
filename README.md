@@ -40,15 +40,33 @@ Now pick how you want to use it — there are two ways.
 ### Two ways to run it
 
 **1. The control panel (easiest — no files to edit).** A page opens in your
-browser where you type keywords, pick a timeframe, tick which outlets to
-search, and click **Generate**. Good for quick, one-off searches.
+browser where you build one or more searches, pick a timeframe for each, tick
+which outlets to include, and click **Generate**.
 
 ```bash
 .venv/bin/python webapp.py
 ```
 
+In the panel you can:
+
+- **Combine several searches into one report** — "Add another search" gives you
+  a second card (e.g. *UK politics* + *US economy*); each becomes its own
+  section, in order.
+- **Edit and re-run** — the report has an "← Edit this search" link that takes
+  you back to the panel with your searches intact, so you can tweak and
+  regenerate.
+- **Save a search to run again** — name it (e.g. *Morning briefing*) and it's
+  saved for next time, with **Run**, **Edit**, and **Delete** on the panel's
+  home page.
+
 Leave it running and come back to the browser tab whenever you want another
 search. Press `Ctrl+C` in the terminal to stop it.
+
+Saved searches live in a `searches/` folder as small YAML files in the same
+format as `config.yaml` — so a search you saved in the panel can *also* be run
+from the command line: `python monitor.py --config searches/morning-briefing.yaml`.
+(The panel never edits `config.yaml` itself — that file stays yours to
+hand-edit — but it can load your `config.yaml` searches in as a starting point.)
 
 **2. Saved daily searches (for the same searches every morning).** Define
 your standing searches once in `config.yaml`, then run one command to get a
@@ -181,6 +199,7 @@ monitoring/matcher.py       applies your keywords and date windows (pure logic, 
 monitoring/pipeline.py      the shared fetch → filter → render engine both entry points use
 monitoring/report.py        renders the report and its Markdown twin
 monitoring/webserver.py     the control panel's HTTP layer (form, generate, serve)
+monitoring/searches.py      saving/loading named searches (path-safe file storage)
 templates/report.html.j2    the report's entire appearance
 templates/control_panel.html.j2  the control panel form
 ```
