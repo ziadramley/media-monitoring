@@ -32,6 +32,46 @@
     letter-spacing: 0.1em; font-weight: 700; color: var(--paper); background: var(--accent);
     padding: 0.45em 0.9em; border-radius: 3px; text-decoration: none; white-space: nowrap; }
   .new-report-btn:hover { background: #000; }
+
+  /* "I'm feeling lucky": styled like the Info button at rest; hovering
+     lights a row of little CSS flames along its top edge — the one
+     deliberate splash of colour in the whole monochrome paper. */
+  .lucky-form { margin: 0; }
+  .lucky-btn { position: relative; font-family: Georgia, serif; font-size: 0.72rem;
+    text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; color: var(--ink);
+    background: none; border: 1px solid var(--rule-ink); padding: 0.4em 0.85em;
+    border-radius: 3px; cursor: pointer; white-space: nowrap; }
+  .lucky-btn:hover, .lucky-btn:focus-visible { color: #7a2e22; border-color: #b3401f;
+    background: #fdf3ea; }
+  .lucky-btn::before, .lucky-btn::after { content: ""; position: absolute; left: 5%;
+    right: 5%; pointer-events: none; opacity: 0; transform-origin: 50% 100%;
+    transition: opacity 0.25s; }
+  /* Outer flames: taller orange tongues. */
+  .lucky-btn::before { top: -0.62rem; height: 0.72rem; background:
+    radial-gradient(ellipse 11% 95% at 8% 100%,  #e25822 0%, rgba(226,88,34,0) 72%),
+    radial-gradient(ellipse 13% 80% at 24% 100%, #f2a71b 0%, rgba(242,167,27,0) 74%),
+    radial-gradient(ellipse 11% 100% at 41% 100%, #e25822 0%, rgba(226,88,34,0) 72%),
+    radial-gradient(ellipse 13% 85% at 59% 100%, #f2a71b 0%, rgba(242,167,27,0) 74%),
+    radial-gradient(ellipse 11% 95% at 76% 100%, #e25822 0%, rgba(226,88,34,0) 72%),
+    radial-gradient(ellipse 12% 82% at 92% 100%, #f2a71b 0%, rgba(242,167,27,0) 74%); }
+  /* Inner flames: shorter, brighter core. */
+  .lucky-btn::after { top: -0.4rem; height: 0.5rem; filter: blur(0.5px); background:
+    radial-gradient(ellipse 9% 90% at 15% 100%, #ffd23f 0%, rgba(255,210,63,0) 70%),
+    radial-gradient(ellipse 9% 95% at 50% 100%, #ffd23f 0%, rgba(255,210,63,0) 70%),
+    radial-gradient(ellipse 9% 90% at 84% 100%, #ffd23f 0%, rgba(255,210,63,0) 70%); }
+  .lucky-btn:hover::before, .lucky-btn:focus-visible::before { opacity: 1;
+    animation: flame-flicker 0.34s ease-in-out infinite alternate; }
+  .lucky-btn:hover::after, .lucky-btn:focus-visible::after { opacity: 0.9;
+    animation: flame-flicker 0.27s ease-in-out infinite alternate-reverse; }
+  @keyframes flame-flicker {
+    from { transform: scaleY(0.82) scaleX(0.98) translateY(1px); filter: brightness(0.95); }
+    to   { transform: scaleY(1.14) scaleX(1.03) translateY(-1.5px); filter: brightness(1.12); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .lucky-btn:hover::before, .lucky-btn:focus-visible::before,
+    .lucky-btn:hover::after, .lucky-btn:focus-visible::after { animation: none; }
+  }
+
   .nav-empty { font-style: italic; font-size: 0.8rem; color: var(--ink-faint); }
 
   /* Saved-search menu: one control that opens a scrollable index panel, so the
@@ -113,6 +153,12 @@
   <nav class="section-nav">
     <button type="button" class="info-btn" onclick="openInfo()">Info</button>
     <a class="new-report-btn" href="/?new=1" onclick="return confirmNew();">New search</a>
+    {% if lucky %}
+    <form class="lucky-form" method="post" action="/lucky">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <button type="submit" class="lucky-btn" title="Roll a random search and run it">I’m feeling lucky</button>
+    </form>
+    {% endif %}
     {#- All saved searches collapse behind ONE menu, so the nav stays a single
         row however many exist. The panel scrolls internally; each row's name is
         the Edit trigger (click to open it in the editor), with Run and Delete
@@ -206,6 +252,16 @@
   // "New search" confirmation.
   function confirmNew() {
     return confirm("Clear everything and start a new search? Anything you haven’t saved will be lost.");
+  }
+
+  // "I'm feeling lucky": reuse the editor's loading overlay when the page
+  // has one (the report view doesn't — there the browser just navigates).
+  var luckyForm = document.querySelector(".lucky-form");
+  if (luckyForm) {
+    luckyForm.addEventListener("submit", function () {
+      var overlay = document.getElementById("overlay");
+      if (overlay) overlay.style.display = "flex";
+    });
   }
 
   // Confirm deletes. The name is read from a data- attribute (a safe HTML

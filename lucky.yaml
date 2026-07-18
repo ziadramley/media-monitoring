@@ -1,0 +1,930 @@
+# "I'm feeling lucky" keyword pool
+# =================================
+# The random-search button draws its query keywords from this file. Each
+# entry is one keyword: it becomes both a query's name and its search term.
+# Categories exist only to keep the file maintainable — the tool flattens
+# them into one pool.
+#
+# Rosters verified as of 2026-07-18:
+#   uk_mps       every current MP, fetched from members-api.parliament.uk
+#   us_senators  every current senator, via Wikipedia's live list
+#                (senate.gov blocks scripted fetches)
+#   leaders      heads of state/government via Wikipedia's live list
+#
+# Politicians change with every election — refresh these lists now and
+# then, or prune anyone who leaves office.
+
+keywords:
+  leaders:
+  - Donald Trump
+  - Andy Burnham
+  - Keir Starmer
+  - Mark Carney
+  - Anthony Albanese
+  - Emmanuel Macron
+  - Friedrich Merz
+  - Giorgia Meloni
+  - Sanae Takaichi
+  - Narendra Modi
+  - Xi Jinping
+  - Luiz Inácio Lula da Silva
+  - Claudia Sheinbaum
+  - Vladimir Putin
+  - Lee Jae Myung
+  - Cyril Ramaphosa
+  - Recep Tayyip Erdoğan
+  - Prabowo Subianto
+  - Mohammed bin Salman
+  - Javier Milei
+  - Pedro Sánchez
+  - Rob Jetten
+  - Donald Tusk
+  - Volodymyr Zelenskyy
+  - Micheál Martin
+  - Christopher Luxon
+  - Benjamin Netanyahu
+  - Abdel Fattah el-Sisi
+  - Bola Tinubu
+  - Shehbaz Sharif
+  - Jonas Gahr Støre
+  us_senators:
+  - Tommy Tuberville
+  - Katie Britt
+  - Lisa Murkowski
+  - Dan Sullivan
+  - Mark Kelly
+  - Ruben Gallego
+  - John Boozman
+  - Tom Cotton
+  - Alex Padilla
+  - Adam Schiff
+  - Michael Bennet
+  - John Hickenlooper
+  - Richard Blumenthal
+  - Chris Murphy
+  - Chris Coons
+  - Lisa Blunt Rochester
+  - Rick Scott
+  - Ashley Moody
+  - Jon Ossoff
+  - Raphael Warnock
+  - Brian Schatz
+  - Mazie Hirono
+  - Mike Crapo
+  - Jim Risch
+  - Dick Durbin
+  - Tammy Duckworth
+  - Todd Young
+  - Jim Banks
+  - Chuck Grassley
+  - Joni Ernst
+  - Jerry Moran
+  - Roger Marshall
+  - Mitch McConnell
+  - Rand Paul
+  - Bill Cassidy
+  - John Kennedy
+  - Susan Collins
+  - Angus King
+  - Chris Van Hollen
+  - Angela Alsobrooks
+  - Elizabeth Warren
+  - Ed Markey
+  - Gary Peters
+  - Elissa Slotkin
+  - Amy Klobuchar
+  - Tina Smith
+  - Roger Wicker
+  - Cindy Hyde-Smith
+  - Josh Hawley
+  - Eric Schmitt
+  - Steve Daines
+  - Tim Sheehy
+  - Deb Fischer
+  - Pete Ricketts
+  - Catherine Cortez Masto
+  - Jacky Rosen
+  - Jeanne Shaheen
+  - Maggie Hassan
+  - Cory Booker
+  - Andy Kim
+  - Martin Heinrich
+  - Ben Ray Luján
+  - Chuck Schumer
+  - Kirsten Gillibrand
+  - Thom Tillis
+  - Ted Budd
+  - John Hoeven
+  - Kevin Cramer
+  - Bernie Moreno
+  - Jon Husted
+  - James Lankford
+  - Alan Armstrong
+  - Ron Wyden
+  - Jeff Merkley
+  - John Fetterman
+  - Dave McCormick
+  - Jack Reed
+  - Sheldon Whitehouse
+  - Tim Scott
+  - Darline Graham
+  - John Thune
+  - Mike Rounds
+  - Marsha Blackburn
+  - Bill Hagerty
+  - John Cornyn
+  - Ted Cruz
+  - Mike Lee
+  - John Curtis
+  - Bernie Sanders
+  - Peter Welch
+  - Mark Warner
+  - Tim Kaine
+  - Patty Murray
+  - Maria Cantwell
+  - Shelley Moore Capito
+  - Jim Justice
+  - Ron Johnson
+  - Tammy Baldwin
+  - John Barrasso
+  - Cynthia Lummis
+  uk_mps:
+  - Ms Diane Abbott
+  - Jack Abbott
+  - Debbie Abrahams
+  - Shockat Adam
+  - Dr Zubir Ahmed
+  - Luke Akehurst
+  - Mr Bayo Alaba
+  - Dan Aldridge
+  - Mr Douglas Alexander
+  - Heidi Alexander
+  - Sadik Al-Hassan
+  - Rushanara Ali
+  - Tahir Ali
+  - Dr Rosena Allin-Khan
+  - Jim Allister
+  - Gideon Amos
+  - Callum Anderson
+  - Fleur Anderson
+  - Lee Anderson
+  - Stuart Anderson
+  - Stuart Andrew
+  - Tonia Antoniazzi
+  - Steff Aquarone
+  - Edward Argar
+  - Dr Scott Arthur
+  - Jess Asato
+  - James Asser
+  - Jas Athwal
+  - Victoria Atkins
+  - Catherine Atkinson
+  - Lewis Atkinson
+  - Josh Babarinde
+  - Gareth Bacon
+  - Mrs Kemi Badenoch
+  - Mr Calvin Bailey
+  - Olivia Bailey
+  - David Baines
+  - Alex Baker
+  - Richard Baker
+  - Dame Harriett Baldwin
+  - Alex Ballinger
+  - Antonia Bance
+  - Steve Barclay
+  - Paula Barker
+  - Lee Barron
+  - Mr Alex Barros-Curtis
+  - Johanna Baxter
+  - Danny Beales
+  - Lorraine Beavers
+  - Mr Peter Bedford
+  - Órfhlaith Begley
+  - Apsana Begum
+  - Torsten Bell
+  - Hilary Benn
+  - Alison Bennett
+  - Siân Berry
+  - Mr Clive Betts
+  - Saqib Bhatti
+  - Ms Polly Billington
+  - Lara Bird
+  - Matt Bishop
+  - Bob Blackman
+  - Kirsty Blackman
+  - Olivia Blake
+  - Rachel Blake
+  - Chris Bloore
+  - Mrs Elsie Blundell
+  - Kevin Bonavia
+  - Sarah Bool
+  - Jade Botterill
+  - Andrew Bowie
+  - Sureena Brackenridge
+  - Dame Karen Bradley
+  - Aphra Brandreth
+  - Mr Jonathan Brash
+  - Suella Braverman
+  - Alex Brewer
+  - Phil Brickell
+  - Jess Brown-Fuller
+  - Chris Bryant
+  - Julia Buckley
+  - Alex Burghart
+  - Richard Burgon
+  - Maureen Burke
+  - Andy Burnham
+  - David Burton-Sampson
+  - Dawn Butler
+  - Ian Byrne
+  - Liam Byrne
+  - Ruth Cadbury
+  - Nesil Caliskan
+  - Sir Alan Campbell
+  - Mr Gregory Campbell
+  - Irene Campbell
+  - Juliet Campbell
+  - Markus Campbell-Savours
+  - Charlotte Cane
+  - Dan Carden
+  - Sam Carling
+  - Mr Alistair Carmichael
+  - Al Carns
+  - James Cartlidge
+  - David Chadwick
+  - Wendy Chamberlain
+  - Dr Danny Chambers
+  - Sarah Champion
+  - Bambos Charalambous
+  - Mr Luke Charters
+  - Sir Christopher Chope
+  - Dr Ellie Chowns
+  - Feryal Clark
+  - Sir James Cleverly
+  - Sir Geoffrey Clifton-Brown
+  - Lewis Cocking
+  - Chris Coghlan
+  - Ben Coleman
+  - Jacob Collier
+  - Lizzi Collinge
+  - Tom Collins
+  - Victoria Collins
+  - Liam Conlon
+  - Sarah Coombes
+  - Andrew Cooper
+  - Dr Beccy Cooper
+  - Daisy Cooper
+  - John Cooper
+  - Yvette Cooper
+  - Jeremy Corbyn
+  - Alberto Costa
+  - Deirdre Costigan
+  - Claire Coutinho
+  - Sir Geoffrey Cox
+  - Pam Cox
+  - Neil Coyle
+  - Jen Craft
+  - Mary Creagh
+  - Ms Stella Creasy
+  - Torcuil Crichton
+  - Harriet Cross
+  - Pat Cullen
+  - Judith Cummins
+  - Chris Curtis
+  - Janet Daby
+  - Sir Nicholas Dakin
+  - Ashley Dalton
+  - Adam Dance
+  - Steve Darling
+  - Emily Darlington
+  - Ed Davey
+  - Ann Davies
+  - Gareth Davies
+  - Jonathan Davies
+  - Mims Davies
+  - Paul Davies
+  - Shaun Davies
+  - Alex Davies-Jones
+  - David Davis
+  - Marsha De Cordova
+  - Bobby Dean
+  - Josh Dean
+  - Kate Dearden
+  - Carla Denyer
+  - Charlie Dewhirst
+  - Mr Tanmanjeet Singh Dhesi
+  - Jim Dickson
+  - Mr Lee Dillon
+  - Dame Caroline Dinenage
+  - Anna Dixon
+  - Samantha Dixon
+  - Anneliese Dodds
+  - Helena Dollimore
+  - Dave Doogan
+  - Stephen Doughty
+  - Peter Dowd
+  - Sir Oliver Dowden
+  - Graeme Downie
+  - Rosie Duffield
+  - Sir Iain Duncan Smith
+  - Neil Duncan-Jordan
+  - Sarah Dyke
+  - Dame Angela Eagle
+  - Maria Eagle
+  - Alex Easton
+  - Colum Eastwood
+  - Sorcha Eastwood
+  - Cat Eccles
+  - Lauren Edwards
+  - Sarah Edwards
+  - Clive Efford
+  - Damien Egan
+  - Maya Ellis
+  - Chris Elmore
+  - Kirith Entwistle
+  - Florence Eshalomi
+  - Bill Esterson
+  - Chris Evans
+  - Dr Luke Evans
+  - Miatta Fahnbulleh
+  - Mr Hamish Falconer
+  - Linsey Farnsworth
+  - Tim Farron
+  - Josh Fenton-Glynn
+  - Mark Ferguson
+  - Patricia Ferguson
+  - John Finucane
+  - Natalie Fleet
+  - Emma Foody
+  - Catherine Fookes
+  - Richard Foord
+  - Mr Will Forster
+  - Peter Fortune
+  - Mr Paul Foster
+  - Sir Ashley Fox
+  - Vicky Foxcroft
+  - Mary Kelly Foy
+  - Daniel Francis
+  - Mr Mark Francois
+  - Zöe Franklin
+  - George Freeman
+  - Mr Louie French
+  - Mr James Frith
+  - Richard Fuller
+  - Gill Furniss
+  - Sir Roger Gale
+  - Barry Gardiner
+  - Dr Allison Gardner
+  - Mark Garnier
+  - Anna Gelderd
+  - Alan Gemmell
+  - Andrew George
+  - Gill German
+  - Ms Nusrat Ghani
+  - Sarah Gibson
+  - Tracy Gilbert
+  - Preet Kaur Gill
+  - Rachel Gilmour
+  - Becky Gittins
+  - John Glen
+  - Mary Glindon
+  - Olly Glover
+  - Marie Goldman
+  - Ben Goldsborough
+  - Tom Gordon
+  - Jodie Gosling
+  - Georgia Gould
+  - John Grady
+  - Helen Grant
+  - Sarah Green
+  - Lilian Greenwood
+  - Andrew Griffith
+  - Dame Nia Griffith
+  - Alison Griffiths
+  - Amanda Hack
+  - Louise Haigh
+  - Sarah Hall
+  - Fabian Hamilton
+  - Paulette Hamilton
+  - Claire Hanna
+  - Monica Harding
+  - Emma Hardy
+  - Carolyn Harris
+  - Rebecca Harris
+  - Lloyd Hatton
+  - Helen Hayes
+  - Sir John Hayes
+  - Tom Hayes
+  - Claire Hazelgrove
+  - Chris Hazzard
+  - John Healey
+  - Sir Mark Hendrick
+  - Pippa Heylings
+  - Dame Meg Hillier
+  - Chris Hinchliff
+  - Jonathan Hinder
+  - Damian Hinds
+  - Simon Hoare
+  - Wera Hobhouse
+  - Mrs Sharon Hodgson
+  - Mr Richard Holden
+  - Kevin Hollinrake
+  - Paul Holmes
+  - Rachel Hopkins
+  - Sir Lindsay Hoyle
+  - Nigel Huddleston
+  - Dr Neil Hudson
+  - Claire Hughes
+  - Dáire Hughes
+  - Alison Hume
+  - Sir Jeremy Hunt
+  - Dr Rupa Huq
+  - Patrick Hurley
+  - Mr Adnan Hussain
+  - Imran Hussain
+  - Leigh Ingham
+  - Natasha Irons
+  - Sally Jameson
+  - Christine Jardine
+  - Dan Jarvis
+  - Liz Jarvis
+  - Sir Bernard Jenkin
+  - Robert Jenrick
+  - Terry Jermy
+  - Adam Jogee
+  - Dr Caroline Johnson
+  - Dame Diana Johnson
+  - Kim Johnson
+  - Clive Jones
+  - Darren Jones
+  - Gerald Jones
+  - Lillian Jones
+  - Ruth Jones
+  - Sarah Jones
+  - Lincoln Jopp
+  - Gurinder Singh Josan
+  - Sojan Joseph
+  - Warinder Juss
+  - Chris Kane
+  - Mike Kane
+  - Satvir Kaur
+  - Alicia Kearns
+  - Liz Kendall
+  - Afzal Khan
+  - Ayoub Khan
+  - Naushabah Khan
+  - Stephen Kinnock
+  - Jayne Kirkham
+  - Gen Kitchen
+  - Mr Paul Kohler
+  - Danny Kruger
+  - Sonia Kumar
+  - Uma Kumaran
+  - Peter Kyle
+  - Laura Kyrke-Smith
+  - Ben Lake
+  - Katie Lam
+  - Peter Lamb
+  - Mr David Lammy
+  - John Lamont
+  - Ian Lavery
+  - Chris Law
+  - Noah Law
+  - Kim Leadbeater
+  - Graham Leadbitter
+  - Sir Edward Leigh
+  - Brian Leishman
+  - Emma Lewell
+  - Andrew Lewin
+  - Clive Lewis
+  - Sir Julian Lewis
+  - Simon Lightwood
+  - Carla Lockhart
+  - Seamus Logan
+  - Rebecca Long Bailey
+  - Julia Lopez
+  - Rupert Lowe
+  - Douglas Lumsden
+  - Josh MacAlister
+  - James MacCleary
+  - Alice Macdonald
+  - Mr Angus MacDonald
+  - Andy MacNae
+  - Justin Madders
+  - Ben Maguire
+  - Helen Maguire
+  - Shabana Mahmood
+  - Alan Mak
+  - Seema Malhotra
+  - Mr Cathal Mallaghan
+  - Kit Malthouse
+  - Amanda Martin
+  - Mike Martin
+  - Rachael Maskell
+  - Paul Maskey
+  - Keir Mather
+  - Brian Mathew
+  - Alex Mayer
+  - Jerome Mayhew
+  - Charlie Maynard
+  - Douglas McAllister
+  - Kerry McCarthy
+  - Martin McCluskey
+  - Dame Siobhain McDonagh
+  - Andy McDonald
+  - Chris McDonald
+  - John McDonnell
+  - Blair McDougall
+  - Lola McEvoy
+  - Pat McFadden
+  - Alison McGovern
+  - Alex McIntyre
+  - Gordon McKee
+  - Kevin McKenna
+  - Catherine McKinnell
+  - Jim McMahon
+  - Anna McMorrin
+  - James McMurdock
+  - Frank McNally
+  - Kirsty McNeill
+  - Esther McVey
+  - Llinos Medi
+  - Anneliese Midgley
+  - Ed Miliband
+  - Calum Miller
+  - John Milne
+  - Ms Julie Minns
+  - Navendu Mishra
+  - Sir Andrew Mitchell
+  - Abtisam Mohamed
+  - Iqbal Mohamed
+  - Mr Gagan Mohindra
+  - Perran Moon
+  - Robbie Moore
+  - Layla Moran
+  - Jessica Morden
+  - Edward Morello
+  - Helen Morgan
+  - Stephen Morgan
+  - Grahame Morris
+  - Joe Morris
+  - Tom Morrison
+  - Joy Morrissey
+  - Wendy Morton
+  - Dr Kieran Mullan
+  - Margaret Mullane
+  - David Mundell
+  - Tessa Munt
+  - Luke Murphy
+  - Chris Murray
+  - Ian Murray
+  - James Murray
+  - Katrina Murray
+  - Susan Murray
+  - Dr Andrew Murrison
+  - Luke Myer
+  - James Naish
+  - Connor Naismith
+  - Lisa Nandy
+  - Kanishka Narayan
+  - Pamela Nash
+  - Josh Newbury
+  - Samantha Niblett
+  - Charlotte Nichols
+  - Caroline Nokes
+  - Jesse Norman
+  - Alex Norris
+  - Dan Norris
+  - Ben Obese-Jecty
+  - Neil O'Brien
+  - Brendan O'Hara
+  - Sarah Olney
+  - Melanie Onn
+  - Dame Chi Onwurah
+  - Dr Simon Opher
+  - Ms Abena Oppong-Asare
+  - Kate Osamor
+  - Kate Osborne
+  - Tristan Osborne
+  - Taiwo Owatemi
+  - Sarah Owen
+  - Darren Paffey
+  - Andrew Pakes
+  - Priti Patel
+  - Matthew Patrick
+  - Rebecca Paul
+  - Michael Payne
+  - Stephanie Peacock
+  - Jon Pearce
+  - Matthew Pennycook
+  - Mr Toby Perkins
+  - Manuela Perteghella
+  - Jess Phillips
+  - Bridget Phillipson
+  - Chris Philp
+  - Dr Al Pinkerton
+  - David Pinto-Duschinsky
+  - Lee Pitcher
+  - Jo Platt
+  - Sarah Pochin
+  - Luke Pollard
+  - Joe Powell
+  - Lucy Powell
+  - Gregor Poynton
+  - Dr Peter Prinsley
+  - Mark Pritchard
+  - Richard Quigley
+  - Yasmin Qureshi
+  - Steve Race
+  - Shivani Raja
+  - Adrian Ramsay
+  - Mr Connor Rand
+  - Andrew Ranger
+  - Jack Rankin
+  - Angela Rayner
+  - Mike Reader
+  - David Reed
+  - Steve Reed
+  - Ellie Reeves
+  - Rachel Reeves
+  - Joani Reid
+  - Emma Reynolds
+  - Jonathan Reynolds
+  - Mr Joshua Reynolds
+  - Martin Rhodes
+  - Bell Ribeiro-Addy
+  - Jake Richards
+  - Jenny Riddell-Carpenter
+  - Lucy Rigby
+  - Ms Marie Rimmer
+  - Dave Robertson
+  - Joe Robertson
+  - Gavin Robinson
+  - Tim Roca
+  - Matt Rodda
+  - Ian Roome
+  - Andrew Rosindell
+  - Sam Rushworth
+  - Sarah Russell
+  - Tom Rutland
+  - Oliver Ryan
+  - Anna Sabine
+  - Sarah Sackman
+  - Dr Jeevun Sandher
+  - Louise Sandher-Jones
+  - Dr Roz Savage
+  - Liz Saville Roberts
+  - Michelle Scrogham
+  - Mark Sewards
+  - Naz Shah
+  - Baggy Shanker
+  - Michael Shanks
+  - Jim Shannon
+  - Dr Neil Shastri-Hurst
+  - Sir Alec Shelbrooke
+  - Tulip Siddiq
+  - David Simmonds
+  - Vikki Slade
+  - Andy Slaughter
+  - John Slinger
+  - Lisa Smart
+  - Cat Smith
+  - David Smith
+  - Greg Smith
+  - Jeff Smith
+  - Sir Julian Smith
+  - Nick Smith
+  - Rebecca Smith
+  - Sarah Smith
+  - Karin Smyth
+  - Gareth Snell
+  - Mr Andrew Snowden
+  - Alex Sobel
+  - Ian Sollom
+  - Dr Ben Spencer
+  - Hannah Spencer
+  - Patrick Spencer
+  - Gregory Stafford
+  - Euan Stainbank
+  - Sir Keir Starmer
+  - Blake Stephenson
+  - Jo Stevens
+  - Kenneth Stevenson
+  - Elaine Stewart
+  - Jamie Stone
+  - Will Stone
+  - Alistair Strathern
+  - Wes Streeting
+  - Alan Strickland
+  - Sir Mel Stride
+  - Graham Stringer
+  - Graham Stuart
+  - Kirsteen Sullivan
+  - Dr Lauren Sullivan
+  - Zarah Sultana
+  - Rishi Sunak
+  - Peter Swallow
+  - Robin Swann
+  - Sir Desmond Swayne
+  - Sir Mark Tami
+  - Mike Tapp
+  - Alison Taylor
+  - David Taylor
+  - Luke Taylor
+  - Rachel Taylor
+  - Bradley Thomas
+  - Cameron Thomas
+  - Fred Thomas
+  - Gareth Thomas
+  - Nick Thomas-Symonds
+  - Adam Thompson
+  - Emily Thornberry
+  - Richard Tice
+  - Dr Marie Tidball
+  - Sir Stephen Timms
+  - Nick Timothy
+  - Jessica Toale
+  - Dan Tomlinson
+  - Jon Trickett
+  - Laura Trott
+  - Henry Tufnell
+  - Tom Tugendhat
+  - Anna Turley
+  - Matt Turmaine
+  - Karl Turner
+  - Laurence Turner
+  - Derek Twigg
+  - Liz Twist
+  - Harpreet Uppal
+  - Freddie van Mierlo
+  - Tony Vaughan
+  - Valerie Vaz
+  - Martin Vickers
+  - Matt Vickers
+  - Chris Vince
+  - Caroline Voaden
+  - Christian Wakeford
+  - Imogen Walker
+  - Chris Ward
+  - Melanie Ward
+  - Paul Waugh
+  - Chris Webb
+  - Michelle Welsh
+  - Catherine West
+  - Andrew Western
+  - Matt Western
+  - Helen Whately
+  - Michael Wheeler
+  - John Whitby
+  - Jo White
+  - Katie White
+  - Sir John Whittingdale
+  - Nadia Whittome
+  - James Wild
+  - Max Wilkinson
+  - David Williams
+  - Sir Gavin Williamson
+  - Munira Wilson
+  - Sammy Wilson
+  - Pete Wishart
+  - Steve Witherden
+  - Mike Wood
+  - Sean Woodcock
+  - Sir Jeremy Wright
+  - Rosie Wrighting
+  - Martin Wrigley
+  - Yuan Yang
+  - Mohammad Yasin
+  - Steve Yemm
+  - Claire Young
+  - Daniel Zeichner
+  topics:
+  - climate change
+  - economy
+  - inflation
+  - interest rates
+  - technology
+  - artificial intelligence
+  - AI
+  - video games
+  - immigration
+  - housing
+  - healthcare
+  - NHS
+  - education
+  - energy prices
+  - oil prices
+  - electric vehicles
+  - space exploration
+  - cybersecurity
+  - social media
+  - elections
+  - trade
+  - tariffs
+  - defence
+  - NATO
+  - Ukraine
+  - Middle East
+  - Gaza
+  - China relations
+  - Brexit
+  - taxation
+  - unemployment
+  - strikes
+  - railways
+  - aviation
+  - farming
+  - fishing
+  - supreme court
+  - crime
+  - policing
+  - prisons
+  - drugs policy
+  - gambling
+  - obesity
+  - mental health
+  - pandemic
+  - vaccines
+  - cancer research
+  - genetics
+  - quantum computing
+  - semiconductors
+  - cryptocurrency
+  - banking
+  - mortgages
+  - pensions
+  - minimum wage
+  - cost of living
+  - childcare
+  - universities
+  - exams
+  - football
+  - Olympics
+  - cricket
+  - tennis
+  - Formula 1
+  - Premier League
+  - World Cup
+  - streaming
+  - music industry
+  - publishing
+  - museums
+  - royal family
+  - flooding
+  - heatwave
+  - wildfires
+  - renewable energy
+  - nuclear power
+  - wind farms
+  - solar power
+  companies:
+  - Apple
+  - Microsoft
+  - Google
+  - Amazon
+  - Meta
+  - Tesla
+  - Netflix
+  - Nvidia
+  - OpenAI
+  - Anthropic
+  - SpaceX
+  - Disney
+  - Boeing
+  - Airbus
+  - BP
+  - Shell
+  - ExxonMobil
+  - BAE Systems
+  - Rolls-Royce
+  - AstraZeneca
+  - Pfizer
+  - GSK
+  - Barclays
+  - HSBC
+  - Lloyds
+  - NatWest
+  - JPMorgan
+  - Goldman Sachs
+  - Bank of America
+  - Tesco
+  - Sainsbury's
+  - Marks & Spencer
+  - Aldi
+  - Walmart
+  - Costco
+  - McDonald's
+  - Starbucks
+  - Coca-Cola
+  - PepsiCo
+  - Nike
+  - Adidas
+  - Unilever
+  - Procter & Gamble
+  - Ford
+  - General Motors
+  - Toyota
+  - Volkswagen
+  - Ryanair
+  - British Airways
+  - easyJet

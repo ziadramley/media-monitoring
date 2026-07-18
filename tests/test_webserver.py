@@ -227,6 +227,7 @@ class LiveServer(unittest.TestCase):
         # Port 0 lets the OS pick a free port — create_server returns it.
         self.server, self.port = create_server(
             _PUBS, 0, reports_dir=self.reports_dir, searches_dir=self.searches_dir,
+            lucky_keywords=["alpha", "beta", "gamma", "delta", "epsilon", "zeta"],
         )
         threading.Thread(target=self.server.serve_forever, daemon=True).start()
 
@@ -357,6 +358,35 @@ class LiveServer(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertIn("1 feed may be frozen", html)
         self.assertIn("newest item is 30 days old", html)
+
+    # -- I'm feeling lucky -----------------------------------------------
+    def test_lucky_button_renders_in_the_nav(self):
+        status, html = self._request("/")
+        self.assertEqual(status, 200)
+        self.assertIn("lucky-btn", html)
+        self.assertIn('action="/lucky"', html)
+
+    def test_lucky_rolls_saves_and_lands_on_the_report(self):
+        with patch("monitoring.webserver.generate_report",
+                   return_value=_fake_result(self.reports_dir, "Lucky Search 1")):
+            status, html = self._request("/lucky", data={"csrf": self._csrf()})
+        self.assertEqual(status, 200)
+        self.assertIn("Lucky Search 1", html)          # the in-app report view
+        self.assertIn("Printable version", html)
+        # The roll was saved like any generated search, runnable later.
+        self.assertTrue((self.searches_dir / "lucky-search-1.yaml").is_file())
+
+    def test_second_lucky_roll_gets_the_next_number(self):
+        with patch("monitoring.webserver.generate_report",
+                   side_effect=lambda *a, **k: _fake_result(self.reports_dir)):
+            self._request("/lucky", data={"csrf": self._csrf()})
+            self._request("/lucky", data={"csrf": self._csrf()})
+        self.assertTrue((self.searches_dir / "lucky-search-2.yaml").is_file())
+
+    def test_lucky_without_csrf_is_rejected(self):
+        status, _ = self._request("/lucky", data={"x": "1"})
+        self.assertEqual(status, 403)
+        self.assertFalse((self.searches_dir / "lucky-search-1.yaml").exists())
 
     def test_report_file_serving_and_traversal_guard(self):
         self.reports_dir.mkdir(parents=True, exist_ok=True)

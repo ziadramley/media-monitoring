@@ -16,6 +16,7 @@ from monitoring.searches import (
     delete_search,
     list_searches,
     load_search,
+    next_lucky_name,
     next_untitled_name,
     save_search,
     slugify,
@@ -137,6 +138,14 @@ class NextUntitled(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             save_search("Untitled Search 1", [a_query()], d)
             save_search("Untitled Search 3", [a_query()], d)
+            self.assertEqual(next_untitled_name(d), "Untitled Search 2")
+
+    def test_lucky_names_number_independently(self):
+        with tempfile.TemporaryDirectory() as d:
+            self.assertEqual(next_lucky_name(d), "Lucky Search 1")
+            save_search("Lucky Search 1", [a_query()], d)
+            save_search("Untitled Search 1", [a_query()], d)  # doesn't interfere
+            self.assertEqual(next_lucky_name(d), "Lucky Search 2")
             self.assertEqual(next_untitled_name(d), "Untitled Search 2")
 
 

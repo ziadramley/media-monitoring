@@ -12,6 +12,7 @@ Routes:
     POST /report/remove          prune one article from the current report
     POST /edit/<slug>            load a saved search into the editor
     POST /generate               build a report from the submitted cards
+    POST /lucky                  roll a random search and run it ("I'm feeling lucky")
     POST /save                   save the submitted cards under a name
     POST /run/<slug>             run a saved search straight to a report
     POST /delete/<slug>          delete a saved search
@@ -63,11 +64,13 @@ from monitoring.searches import (
     delete_search,
     list_searches,
     load_search,
+    next_lucky_name,
     next_untitled_name,
     save_search,
     slugify,
 )
 from monitoring.config import ConfigError
+from monitoring.lucky import lucky_queries
 
 log = logging.getLogger("mimi")
 
@@ -231,10 +234,14 @@ def make_handler(
     publications: dict[str, Publication],
     reports_dir: str | Path = REPORTS_DIR,
     searches_dir: str | Path = SEARCHES_DIR,
+    lucky_keywords: list[str] | None = None,
 ):
     """Build the request handler class, closing over the registry, output
-    folder, and saved-search storage so the server stays a plain object."""
+    folder, and saved-search storage so the server stays a plain object.
+    `lucky_keywords` powers the I'm-feeling-lucky button; when empty the
+    button is hidden and the route refuses politely."""
     reports_path = Path(reports_dir)
+    lucky_keywords = lucky_keywords or []
 
     # In-memory recollection of the last search the user ran or loaded, so
     # returning to the editor restores it. Single-user localhost tool — a
@@ -325,6 +332,8 @@ def make_handler(
                 return
             if path == "/generate":
                 self._generate(fields)
+            elif path == "/lucky":
+                self._lucky()
             elif path == "/report/remove":
                 self._remove_article(fields)
             elif path == "/save":
@@ -371,6 +380,7 @@ def make_handler(
                 top_error=top_error,
                 flash=flash,
                 csrf=csrf_token,
+                lucky=bool(lucky_keywords),
             )
             self._send_html(html, status=status)
 
@@ -398,6 +408,7 @@ def make_handler(
                 total_articles=sum(len(s.articles) for s in sections),
                 publications=result.publications,
                 csrf=csrf_token,
+                lucky=bool(lucky_keywords),
             )
             self._send_html(html, status=200)
 
@@ -483,6 +494,12 @@ def make_handler(
             with state_lock:
                 state["cards"] = [{**c, "error": None} for c in view]
                 state["search_name"] = search_name
+            self._run_and_show(search_name, queries)
+
+        def _run_and_show(self, search_name: str, queries: list[Query]) -> None:
+            """The shared tail of every report-producing route: generate,
+            stash for GET /report, and redirect there. Any failure becomes
+            a logged 500 page, never a dropped connection."""
             log.info("Generating report %r from %d query(ies).", search_name, len(queries))
             try:
                 result = generate_report(queries, publications, reports_dir=reports_path,
@@ -498,6 +515,24 @@ def make_handler(
                 return
             self._stash_report(search_name, result)
             self._redirect("/report")
+
+        def _lucky(self) -> None:
+            """The I'm-feeling-lucky button: roll a random search, save it
+            like any generated search, and run it straight to a report."""
+            if not lucky_keywords:  # button hidden, but refuse politely anyway
+                self._redirect("/")
+                return
+            queries = lucky_queries(lucky_keywords, publications)
+            search_name = next_lucky_name(searches_dir)
+            try:
+                save_search(search_name, queries, searches_dir)
+            except (ValueError, OSError):
+                log.error("Could not save lucky search:\n%s", traceback.format_exc())
+                # Best-effort, same as _generate — still produce the report.
+            with state_lock:
+                state["cards"] = cards_from_queries(queries)
+                state["search_name"] = search_name
+            self._run_and_show(search_name, queries)
 
         def _save(self, fields: dict[str, list[str]]) -> None:
             # Saving only needs a name — the searches can be empty or
@@ -564,20 +599,7 @@ def make_handler(
                     top_error=f"“{search.name}” has no queries yet — add some, then Generate.",
                 )
                 return
-            log.info("Running saved search %r.", search.name)
-            try:
-                result = generate_report(search.queries, publications, reports_dir=reports_path,
-                                         report_name=search.name)
-            except Exception:
-                log.error("Report generation failed:\n%s", traceback.format_exc())
-                self._send_html(
-                    "<h1>Something went wrong generating the report.</h1>"
-                    '<p><a href="/">Back to the control panel</a>.</p>',
-                    status=500,
-                )
-                return
-            self._stash_report(search.name, result)
-            self._redirect("/report")
+            self._run_and_show(search.name, search.queries)
 
         def _delete_saved(self, slug: str) -> None:
             try:
@@ -637,10 +659,11 @@ def create_server(
     reports_dir: str | Path = REPORTS_DIR,
     searches_dir: str | Path = SEARCHES_DIR,
     host: str = WEB_HOST,
+    lucky_keywords: list[str] | None = None,
 ) -> tuple[ThreadingHTTPServer, int]:
     """Bind the server to localhost, scanning upward for a free port if
     the requested one is busy. Returns (server, actual_port)."""
-    handler = make_handler(publications, reports_dir, searches_dir)
+    handler = make_handler(publications, reports_dir, searches_dir, lucky_keywords)
     last_error: OSError | None = None
     for candidate in range(port, port + WEB_PORT_SCAN_LIMIT):
         try:

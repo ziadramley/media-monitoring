@@ -77,6 +77,12 @@ SEARCH_NAME_MAX_LEN = 20
 DEFAULT_CONFIG_PATH = "config.yaml"
 DEFAULT_PUBLICATIONS_PATH = "publications.yaml"
 
+# The "I'm feeling lucky" button: where its keyword pool lives, and how
+# many random queries one press builds.
+DEFAULT_LUCKY_PATH = "lucky.yaml"
+LUCKY_MIN_QUERIES = 1
+LUCKY_MAX_QUERIES = 5
+
 # Local control-panel web server (webapp.py). Binds to localhost only —
 # the panel is never reachable from your network or the internet.
 WEB_HOST = "127.0.0.1"

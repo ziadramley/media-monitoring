@@ -141,17 +141,30 @@ def delete_search(slug: str, searches_dir: str | Path = SEARCHES_DIR) -> bool:
     return False
 
 
-def next_untitled_name(searches_dir: str | Path = SEARCHES_DIR) -> str:
-    """The next free "Untitled Search N" (N starting at 1) — used when a
-    report is generated from a search that hasn't been named yet."""
+def _next_numbered_name(prefix: str, searches_dir: str | Path) -> str:
+    """The next free "<prefix> N" (N starting at 1), judged by which
+    slugs already exist on disk."""
+    stem = slugify(prefix)
     base = Path(searches_dir)
     used: set[int] = set()
     if base.is_dir():
-        for path in base.glob("untitled-search-*.yaml"):
-            match = re.fullmatch(r"untitled-search-(\d+)", path.stem)
+        for path in base.glob(f"{stem}-*.yaml"):
+            match = re.fullmatch(rf"{re.escape(stem)}-(\d+)", path.stem)
             if match:
                 used.add(int(match.group(1)))
     n = 1
     while n in used:
         n += 1
-    return f"Untitled Search {n}"
+    return f"{prefix} {n}"
+
+
+def next_untitled_name(searches_dir: str | Path = SEARCHES_DIR) -> str:
+    """The next free "Untitled Search N" — used when a report is
+    generated from a search that hasn't been named yet."""
+    return _next_numbered_name("Untitled Search", searches_dir)
+
+
+def next_lucky_name(searches_dir: str | Path = SEARCHES_DIR) -> str:
+    """The next free "Lucky Search N" — used by the I'm-feeling-lucky
+    button, so its rolls are distinguishable from drafts."""
+    return _next_numbered_name("Lucky Search", searches_dir)

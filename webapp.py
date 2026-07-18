@@ -22,12 +22,14 @@ import webbrowser
 
 from monitoring.config import ConfigError, load_publications
 from monitoring.constants import (
+    DEFAULT_LUCKY_PATH,
     DEFAULT_PUBLICATIONS_PATH,
     REPORTS_DIR,
     SEARCHES_DIR,
     WEB_DEFAULT_PORT,
     WEB_HOST,
 )
+from monitoring.lucky import load_keywords
 from monitoring.webserver import create_server
 
 log = logging.getLogger("mimi")
@@ -39,6 +41,8 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--publications", default=DEFAULT_PUBLICATIONS_PATH,
                         help="path to the publication registry (default: publications.yaml)")
+    parser.add_argument("--lucky", default=DEFAULT_LUCKY_PATH,
+                        help="path to the I'm-feeling-lucky keyword pool (default: lucky.yaml)")
     parser.add_argument("--port", type=int, default=WEB_DEFAULT_PORT,
                         help=f"port to serve on (default: {WEB_DEFAULT_PORT})")
     parser.add_argument("--no-open", action="store_true",
@@ -53,11 +57,20 @@ def main(argv: list[str] | None = None) -> int:
         log.error("%s", exc)
         return 1
 
+    # The lucky button is optional garnish: a broken or missing pool file
+    # gets a warning and a panel without the button, not a dead server.
+    try:
+        lucky_keywords = load_keywords(args.lucky)
+    except ConfigError as exc:
+        log.warning("I'm-feeling-lucky button disabled: %s", exc)
+        lucky_keywords = []
+
     try:
         server, port = create_server(
             publications, args.port,
             reports_dir=REPORTS_DIR,
             searches_dir=SEARCHES_DIR,
+            lucky_keywords=lucky_keywords,
         )
     except OSError as exc:
         log.error("%s", exc)

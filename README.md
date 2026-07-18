@@ -73,6 +73,17 @@ In the panel you can:
 Leave it running and come back to the browser tab whenever you want another
 search. Press `Ctrl+C` in the terminal to stop it.
 
+**Feeling lucky?** The **I'm feeling lucky** button in the bar (careful —
+it's flammable) rolls a random search and runs it immediately: one to five
+queries, each drawing a random keyword from the ~900-entry pool in
+[lucky.yaml](lucky.yaml) — every current UK MP and US senator, world leaders,
+big companies, and a stack of topics — pointed at all-UK outlets, all-US
+outlets, or everything, over a random timeframe. Each roll is saved as
+*Lucky Search N* so a good one can be re-run or edited like any other search.
+One caveat: the MP and senator rosters were **verified as of 18 July 2026**
+and go stale with every election — refresh the lists in `lucky.yaml` now and
+then (the file header says where they came from).
+
 Saved searches live in a `searches/` folder as small YAML files in the same
 format as `config.yaml` — so a search you saved in the panel can *also* be run
 from the command line: `python monitor.py --config searches/morning-briefing.yaml`.
