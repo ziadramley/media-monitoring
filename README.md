@@ -1,4 +1,4 @@
-# Media Monitor
+# Mimi, the media monitoring tool
 
 A local media-monitoring tool for press and comms teams. Run one command and
 get a clean, printable HTML report of recent headlines from major UK and US
@@ -7,6 +7,12 @@ browser.
 
 Everything runs on your own machine. The only network traffic is fetching the
 outlets' public RSS feeds, exactly as a feed reader would.
+
+**One user, one machine.** Mimi is deliberately a personal tool: one copy per
+person, each with their own saved searches and reports. Don't run it as a
+shared server for a team — it has no accounts, so everyone would share (and
+could delete) the same searches, reports, and last-generated view. "More
+users" means more installs, and the 5-minute setup below is the whole cost.
 
 ## What it does — and deliberately doesn't
 
@@ -40,8 +46,9 @@ Now pick how you want to use it — there are two ways.
 ### Two ways to run it
 
 **1. The control panel (easiest — no files to edit).** A page opens in your
-browser where you build one or more searches, pick a timeframe for each, tick
-which outlets to include, and click **Generate**.
+browser where you build a search out of one or more queries — each query gets
+a name, keywords, a timeframe, and a set of outlets — then click **Generate
+report**.
 
 ```bash
 .venv/bin/python webapp.py
@@ -49,15 +56,19 @@ which outlets to include, and click **Generate**.
 
 In the panel you can:
 
-- **Combine several searches into one report** — "Add another search" gives you
+- **Combine several queries into one report** — "+ Add a new query" gives you
   a second card (e.g. *UK politics* + *US economy*); each becomes its own
-  section, in order.
-- **Edit and re-run** — the report has an "← Edit this search" link that takes
-  you back to the panel with your searches intact, so you can tweak and
-  regenerate.
-- **Save a search to run again** — name it (e.g. *Morning briefing*) and it's
-  saved for next time, with **Run**, **Edit**, and **Delete** on the panel's
-  home page.
+  section of the report, in order. Every query needs a name — it's the
+  section heading.
+- **Curate, then print** — the report opens on screen with a **Remove**
+  button beside each article; prune the irrelevant ones, then use the
+  **Printable version** link. Going back to the control panel restores your
+  search so you can tweak and regenerate.
+- **Save a search to run again** — name it (e.g. *Morning briefing*) and
+  click **Save search**. Saved searches appear in the bar at the top of every
+  page, each with **Run**, **Edit**, and **Delete**. Generating always saves
+  too — an unnamed search is kept as *Untitled Search N* so no report is ever
+  orphaned.
 
 Leave it running and come back to the browser tab whenever you want another
 search. Press `Ctrl+C` in the terminal to stop it.
@@ -177,8 +188,10 @@ Three words with precise meanings in Mimi:
   `reports/`, timestamped, nothing external — it survives being emailed or
   archived, and prints cleanly for a morning meeting. It carries only the
   curated articles: no buttons, no navigation, no error notes.
-- Feeds that couldn't be reached are shown in the on-screen report and the
-  terminal log, so you know what the report *doesn't* cover.
+- Feeds that couldn't be reached — and feeds that answered but whose newest
+  item is weeks old (a frozen feed, see the CNN story above) — are flagged
+  in the on-screen report and the terminal log, so you know what the report
+  *doesn't* cover.
 
 ## Command-line options
 
@@ -228,7 +241,8 @@ Run the tests with `.venv/bin/python -m unittest`.
 
 - **A feed fails with HTTP 403** — some outlets (the Telegraph, sometimes
   Politico) run aggressive bot protection that intermittently refuses even
-  polite requests. The run carries on without them; they usually return.
+  polite requests. Mimi retries once after a short pause, then carries on
+  without them; they usually return.
 - **YAML error on startup** — the error message names the file and problem.
   Most commonly it's a tab character; YAML only accepts spaces.
 - **`date unknown` on an article** — its feed omitted or mangled the

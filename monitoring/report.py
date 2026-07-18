@@ -22,7 +22,7 @@ from monitoring.constants import (
 )
 from monitoring.models import Article, FeedFetchResult
 
-log = logging.getLogger("monitor")
+log = logging.getLogger("mimi")
 
 _TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
 
@@ -107,7 +107,7 @@ def render_html(
         generated_at=generated_at,
         generated_day=format_day(generated_at),
         total_articles=sum(len(s.articles) for s in sections),
-        report_name=report_name or "Media Monitoring",
+        report_name=report_name or "Media monitoring report",
         publications=publications,
     )
 

@@ -3,8 +3,9 @@
     the two surfaces can never drift. Requires a `datefmt` Jinja filter and
     `.query`/`.entry`/`.headline`/`.meta`/`.standfirst` styles in the host.
     With removable=true (in-app only), each article gets a small Remove
-    form so the user can prune it from the report before printing. -#}
-{%- macro render_sections(sections, removable=false) -%}
+    form so the user can prune it from the report before printing; the
+    caller must then also pass the csrf token for those forms. -#}
+{%- macro render_sections(sections, removable=false, csrf=none) -%}
 {% for section in sections %}
 <section class="query" id="{{ section.anchor }}">
   <header>
@@ -32,6 +33,7 @@
         · <time>{{ a.published|datefmt }}</time>
         {%- if removable %}
         <form class="remove-article" method="post" action="/report/remove">
+          <input type="hidden" name="csrf" value="{{ csrf }}">
           <input type="hidden" name="anchor" value="{{ section.anchor }}">
           <input type="hidden" name="key" value="{{ a.dedupe_key }}">
           <button type="submit" title="Remove this article from the report">Remove</button>

@@ -101,9 +101,18 @@
     <div class="nav-section" tabindex="0">
       <span class="nav-section-name">{{ s.name }}</span>
       <div class="nav-dropdown">
-        <a href="/run/{{ s.slug }}">Run</a>
-        <a href="/edit/{{ s.slug }}">Edit</a>
+        {#- Run/Edit/Delete all change state, so all three are POST forms
+            carrying the CSRF token — another website can't trigger them. -#}
+        <form method="post" action="/run/{{ s.slug }}">
+          <input type="hidden" name="csrf" value="{{ csrf }}">
+          <button type="submit">Run</button>
+        </form>
+        <form method="post" action="/edit/{{ s.slug }}">
+          <input type="hidden" name="csrf" value="{{ csrf }}">
+          <button type="submit">Edit</button>
+        </form>
         <form class="delete-form" method="post" action="/delete/{{ s.slug }}" data-name="{{ s.name }}">
+          <input type="hidden" name="csrf" value="{{ csrf }}">
           <button type="submit">Delete</button>
         </form>
       </div>

@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
-from monitoring.constants import REPORTS_DIR
+from monitoring.constants import FROZEN_FEED_THRESHOLD_HOURS, REPORTS_DIR
 from monitoring.fetcher import fetch_all
 from monitoring.matcher import filter_articles
 from monitoring.models import FeedFetchResult, Publication, Query
@@ -24,7 +24,7 @@ from monitoring.report import (
     write_report,
 )
 
-log = logging.getLogger("monitor")
+log = logging.getLogger("mimi")
 
 
 @dataclass
@@ -32,6 +32,7 @@ class ReportResult:
     path: Path
     sections: list[ReportSection]
     failed: list[FeedFetchResult]
+    stale: list[FeedFetchResult]  # fetched fine but newest item is suspiciously old
     generated_at: datetime
     total_articles: int
     report_name: str | None = None
@@ -71,6 +72,13 @@ def generate_report(
         ))
 
     failed = [r for r in fetch_results if not r.ok]
+    # Feeds that answered but whose newest item is weeks old — probably
+    # frozen or abandoned (see the README's CNN story). Shown in the
+    # in-app report so panel users see it, not just the terminal.
+    stale = [
+        r for r in fetch_results
+        if r.ok and (r.newest_age_hours or 0) > FROZEN_FEED_THRESHOLD_HOURS
+    ]
     publications_count = len(needed_ids)
     html = render_html(sections, failed, now, report_name=report_name, publications=publications_count)
     path = write_report(html, now, reports_dir)
@@ -79,6 +87,7 @@ def generate_report(
         path=path,
         sections=sections,
         failed=failed,
+        stale=stale,
         generated_at=now,
         total_articles=sum(len(s.articles) for s in sections),
         report_name=report_name,

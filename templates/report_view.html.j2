@@ -93,9 +93,20 @@
       </ul>
     </div>
     {% endif %}
+
+    {% if stale_feeds %}
+    <div class="widget errors">
+      <h3>{{ stale_feeds|length }} feed{{ "s" if stale_feeds|length != 1 }} may be frozen</h3>
+      <ul>
+        {% for f in stale_feeds %}
+        <li>{{ f.publication_name }} — <code>{{ f.feed_url }}</code> (newest item is {{ (f.newest_age_hours / 24)|round|int }} days old; the feed may be abandoned — consider replacing it in publications.yaml)</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
   </aside>
 
-  {{ render_sections(sections, removable=true) }}
+  {{ render_sections(sections, removable=true, csrf=csrf) }}
 {% endblock %}
 
 {% block extra_js %}

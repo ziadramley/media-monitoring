@@ -10,12 +10,17 @@ Routes:
     GET  /?new=1                 the editor, reset to one blank card
     GET  /report                 the in-app view of the last generated report
     POST /report/remove          prune one article from the current report
-    GET  /edit/<slug>            load a saved search into the editor
+    POST /edit/<slug>            load a saved search into the editor
     POST /generate               build a report from the submitted cards
     POST /save                   save the submitted cards under a name
-    GET  /run/<slug>             run a saved search straight to a report
+    POST /run/<slug>             run a saved search straight to a report
     POST /delete/<slug>          delete a saved search
     GET  /reports/<file>.html    serve the self-contained portable report file
+
+Every request must carry a Host header naming this server (which blocks
+DNS-rebinding attacks), and every POST must carry the per-server CSRF
+token (which blocks other websites submitting forms at localhost). All
+routes with side effects are POST for the same reason.
 
 The editor and the report view share one page shell (templates/_shell.html.j2)
 so the masthead + action nav are identical across both. The report file served
@@ -28,6 +33,8 @@ from __future__ import annotations
 
 import logging
 import re
+import secrets
+import threading
 import traceback
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -61,7 +68,7 @@ from monitoring.searches import (
 )
 from monitoring.config import ConfigError
 
-log = logging.getLogger("monitor")
+log = logging.getLogger("mimi")
 
 _TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
 
@@ -146,12 +153,14 @@ def build_cards(
     queries: list[Query] = []
     view: list[dict] = []
     all_valid = bool(cards)
-    for idx, card in enumerate(cards, start=1):
+    for card in cards:
         keywords = [k.strip() for k in re.split(r"[,\n]", card["keywords"]) if k.strip()]
         selected = [p for p in card["publications"] if p in publications]
 
         error = None
-        if not keywords:
+        if not card["name"]:
+            error = "Give this query a name."
+        elif not keywords:
             error = "Enter at least one keyword or phrase."
         elif card["match"] not in ("any", "all"):
             error = "Choose how to match keywords."
@@ -174,7 +183,7 @@ def build_cards(
             all_valid = False
         else:
             queries.append(Query(
-                name=card["name"] or f"Search {idx}",
+                name=card["name"],
                 keywords=keywords,
                 match=card["match"],
                 date_range=card["date_range"],
@@ -228,9 +237,17 @@ def make_handler(
     # `report` holds the last generated report so GET /report can re-render
     # it (post/redirect/get) without re-fetching.
     state: dict = {"cards": None, "search_name": "", "flash": None, "report": None}
+    # The server is threaded (one thread per request): two browser tabs
+    # must not interleave their reads and writes of the shared state.
+    state_lock = threading.Lock()
+
+    # One secret per server start, embedded in every form and checked on
+    # every POST — a page on another website can't forge it, so it can't
+    # make this server delete searches or generate reports.
+    csrf_token = secrets.token_hex(16)
 
     class ControlPanelHandler(BaseHTTPRequestHandler):
-        server_version = "MediaMonitor/1.0"
+        server_version = "Mimi/1.0"
 
         def log_message(self, fmt: str, *args) -> None:
             log.debug("http %s", fmt % args)
@@ -246,6 +263,13 @@ def make_handler(
 
         def _safely(self, route) -> None:
             try:
+                if not self._host_allowed():
+                    # A request addressed to some other hostname reached us:
+                    # that's a DNS-rebinding attempt, not the user's browser.
+                    log.warning("Rejected request with Host %r",
+                                self.headers.get("Host"))
+                    self._send_html("<h1>Forbidden</h1>", status=403)
+                    return
                 route()
             except Exception:
                 log.error("Unhandled error for %s %s:\n%s",
@@ -259,6 +283,16 @@ def make_handler(
                 except Exception:
                     pass  # response already partly sent — nothing we can do
 
+        def _host_allowed(self) -> bool:
+            """Only answer requests addressed to this server itself —
+            127.0.0.1:<port> or localhost:<port>."""
+            host = (self.headers.get("Host") or "").strip().lower()
+            bound_host, bound_port = self.server.server_address[:2]
+            return host in {
+                f"{bound_host}:{bound_port}",
+                f"localhost:{bound_port}",
+            }
+
         def _route_get(self) -> None:
             parsed = urlparse(self.path)
             path = parsed.path
@@ -266,10 +300,6 @@ def make_handler(
                 self._home(parse_qs(parsed.query))
             elif path == "/report":
                 self._report()
-            elif path.startswith("/edit/"):
-                self._edit_saved(unquote(path[len("/edit/"):]))
-            elif path.startswith("/run/"):
-                self._run_saved(unquote(path[len("/run/"):]))
             elif path.startswith("/reports/"):
                 self._serve_report(path[len("/reports/"):])
             else:
@@ -277,12 +307,27 @@ def make_handler(
 
         def _route_post(self) -> None:
             path = urlparse(self.path).path
+            fields = self._read_form()
+            if fields.get("csrf", [""])[0] != csrf_token:
+                # A stale page from before a server restart, or a forged
+                # cross-site form. Either way: refuse, explain, don't act.
+                self._send_html(
+                    "<h1>This form has expired.</h1>"
+                    '<p>Please <a href="/">go back to the control panel</a> '
+                    "and try again.</p>",
+                    status=403,
+                )
+                return
             if path == "/generate":
-                self._generate()
+                self._generate(fields)
             elif path == "/report/remove":
-                self._remove_article()
+                self._remove_article(fields)
             elif path == "/save":
-                self._save()
+                self._save(fields)
+            elif path.startswith("/edit/"):
+                self._edit_saved(unquote(path[len("/edit/"):]))
+            elif path.startswith("/run/"):
+                self._run_saved(unquote(path[len("/run/"):]))
             elif path.startswith("/delete/"):
                 self._delete_saved(unquote(path[len("/delete/"):]))
             else:
@@ -300,12 +345,13 @@ def make_handler(
             """Remember the last report so GET /report can re-render it.
             `removed` collects (section anchor, dedupe_key) pairs as the
             user prunes articles; it starts empty for every new report."""
-            state["report"] = {
-                "name": name,
-                "file": result.path.name,
-                "result": result,
-                "removed": set(),
-            }
+            with state_lock:
+                state["report"] = {
+                    "name": name,
+                    "file": result.path.name,
+                    "result": result,
+                    "removed": set(),
+                }
 
         # --- rendering the editor --------------------------------------
         def _render_editor(self, cards: list[dict], search_name: str, status: int,
@@ -319,17 +365,21 @@ def make_handler(
                 search_name=search_name,
                 top_error=top_error,
                 flash=flash,
+                csrf=csrf_token,
             )
             self._send_html(html, status=status)
 
         # --- rendering the in-app report view --------------------------
         def _report(self) -> None:
-            rep = state.get("report")
+            with state_lock:
+                rep = state.get("report")
+                if rep:
+                    removed = set(rep["removed"])  # snapshot: render outside the lock
             if not rep:  # nothing generated yet (fresh server / direct hit)
                 self._redirect("/")
                 return
             result = rep["result"]
-            sections = apply_removals(result.sections, rep["removed"])
+            sections = apply_removals(result.sections, removed)
             html = _jinja().get_template("report_view.html.j2").render(
                 saved_searches=self._saved(),
                 flash=None,
@@ -337,31 +387,36 @@ def make_handler(
                 report_file=rep["file"],
                 sections=sections,
                 failed_feeds=result.failed,
+                stale_feeds=result.stale,
                 generated_at=result.generated_at,
                 generated_day=format_day(result.generated_at),
                 total_articles=sum(len(s.articles) for s in sections),
                 publications=result.publications,
+                csrf=csrf_token,
             )
             self._send_html(html, status=200)
 
         # --- pruning articles from the report --------------------------
-        def _remove_article(self) -> None:
+        def _remove_article(self, fields: dict[str, list[str]]) -> None:
             """Remove one article from the current report. The pruned
             report is immediately re-written to reports/ (same filename),
             so the archived file always matches what the user curated and
             the printable link stays a plain page-open."""
-            rep = state.get("report")
+            anchor = fields.get("anchor", [""])[0]
+            key = fields.get("key", [""])[0]
+            with state_lock:
+                rep = state.get("report")
+                if rep:
+                    result = rep["result"]
+                    valid_anchors = {s.anchor for s in result.sections}
+                    if anchor in valid_anchors and key:
+                        rep["removed"].add((anchor, key))
+                    removed = set(rep["removed"])  # snapshot: write outside the lock
             if not rep:
                 self._redirect("/")
                 return
-            fields = self._read_form()
-            anchor = fields.get("anchor", [""])[0]
-            key = fields.get("key", [""])[0]
-            result = rep["result"]
-            valid_anchors = {s.anchor for s in result.sections}
             if anchor in valid_anchors and key:
-                rep["removed"].add((anchor, key))
-                pruned = apply_removals(result.sections, rep["removed"])
+                pruned = apply_removals(result.sections, removed)
                 try:
                     html = render_html(pruned, [], result.generated_at,
                                        report_name=rep["name"],
@@ -373,13 +428,15 @@ def make_handler(
             self._redirect(f"/report#{anchor}" if anchor in valid_anchors else "/report")
 
         def _home(self, query: dict[str, list[str]]) -> None:
-            if "new" in query:
-                state["cards"] = None
-                state["search_name"] = ""
-            flash = state.pop("flash", None)
-            state["flash"] = None
-            cards = state["cards"] or default_cards(publications)
-            self._render_editor(cards, state["search_name"], status=200, flash=flash)
+            with state_lock:
+                if "new" in query:
+                    state["cards"] = None
+                    state["search_name"] = ""
+                flash = state.pop("flash", None)
+                state["flash"] = None
+                cards = state["cards"] or default_cards(publications)
+                search_name = state["search_name"]
+            self._render_editor(cards, search_name, status=200, flash=flash)
 
         def _edit_saved(self, slug: str) -> None:
             try:
@@ -388,13 +445,13 @@ def make_handler(
                 self._render_editor(default_cards(publications), "", status=404,
                                     top_error=str(exc))
                 return
-            state["cards"] = cards_from_queries(search.queries)
-            state["search_name"] = search.name
+            with state_lock:
+                state["cards"] = cards_from_queries(search.queries)
+                state["search_name"] = search.name
             self._redirect("/")
 
         # --- generating and saving -------------------------------------
-        def _generate(self) -> None:
-            fields = self._read_form()
+        def _generate(self, fields: dict[str, list[str]]) -> None:
             search_name = (fields.get("search_name", [""])[0] or "").strip()
             queries, view, ok = build_cards(parse_cards(fields), publications)
             if not ok:
@@ -412,8 +469,9 @@ def make_handler(
             except (ValueError, OSError):
                 log.error("Could not save report on generate:\n%s", traceback.format_exc())
                 # Saving is best-effort here — still produce the report.
-            state["cards"] = [{**c, "error": None} for c in view]
-            state["search_name"] = search_name
+            with state_lock:
+                state["cards"] = [{**c, "error": None} for c in view]
+                state["search_name"] = search_name
             log.info("Generating report %r from %d query(ies).", search_name, len(queries))
             try:
                 result = generate_report(queries, publications, reports_dir=reports_path,
@@ -430,13 +488,12 @@ def make_handler(
             self._stash_report(search_name, result)
             self._redirect("/report")
 
-        def _save(self) -> None:
+        def _save(self, fields: dict[str, list[str]]) -> None:
             # Saving only needs a name — the searches can be empty or
             # half-filled, so you can name and save a draft first and fill
             # it in later. Whatever valid searches exist are stored; cards
             # you started but left incomplete are reported, never dropped
             # silently.
-            fields = self._read_form()
             search_name = (fields.get("search_name", [""])[0] or "").strip()
             queries, view, _ok = build_cards(parse_cards(fields), publications)
             if not slugify(search_name):
@@ -453,8 +510,9 @@ def make_handler(
                 return
 
             # A card is "incomplete" (worth flagging) if the user typed
-            # keywords but it still failed validation — e.g. no publication
-            # selected. A card with no keywords is just an empty slot.
+            # keywords but it still failed validation — no name, no
+            # publication selected… A card with no keywords is just an
+            # empty slot.
             incomplete = sum(1 for c in view if c["error"] and c["keywords"].strip())
             n = len(queries)
             if n == 0 and incomplete == 0:
@@ -462,14 +520,15 @@ def make_handler(
             else:
                 flash = f'Saved “{search_name}” ({n} quer{"ies" if n != 1 else "y"}).'
                 if incomplete:
-                    flash += (f' {incomplete} quer{"ies" if incomplete != 1 else "y"} with no '
-                              f'publication selected {"were" if incomplete != 1 else "was"} left out.')
+                    flash += (f' {incomplete} incomplete quer{"ies" if incomplete != 1 else "y"} '
+                              f'{"were" if incomplete != 1 else "was"} left out.')
             log.info("Saved search %r (%d query[ies], %d incomplete).", search_name, n, incomplete)
 
             # Store the cards without their error flags — the save succeeded.
-            state["cards"] = [{**c, "error": None} for c in view]
-            state["search_name"] = search_name
-            state["flash"] = flash
+            with state_lock:
+                state["cards"] = [{**c, "error": None} for c in view]
+                state["search_name"] = search_name
+                state["flash"] = flash
             self._redirect("/")
 
         def _run_saved(self, slug: str) -> None:
@@ -479,8 +538,9 @@ def make_handler(
                 self._render_editor(default_cards(publications), "", status=404,
                                     top_error=str(exc))
                 return
-            state["cards"] = cards_from_queries(search.queries)
-            state["search_name"] = search.name
+            with state_lock:
+                state["cards"] = cards_from_queries(search.queries)
+                state["search_name"] = search.name
             if not search.queries:  # an empty draft — nothing to run yet
                 self._render_editor(
                     default_cards(publications), search.name, status=200,
@@ -571,7 +631,9 @@ def create_server(
         except OSError as exc:  # port in use — try the next one
             last_error = exc
             continue
-        return server, candidate
+        # Report the port actually bound (asking for port 0 lets the OS
+        # pick one — used by the tests).
+        return server, server.server_address[1]
     raise OSError(
         f"Could not find a free port between {port} and "
         f"{port + WEB_PORT_SCAN_LIMIT - 1}."

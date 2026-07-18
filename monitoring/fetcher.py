@@ -17,18 +17,22 @@ from datetime import datetime, timezone
 import feedparser
 
 from monitoring.constants import (
+    FETCH_RETRIES,
+    FETCH_RETRY_DELAY_SECONDS,
     FETCH_TIMEOUT_SECONDS,
+    FROZEN_FEED_THRESHOLD_HOURS,
     MAX_CONCURRENT_FETCHES,
+    MAX_FEED_BYTES,
     USER_AGENT,
 )
 from monitoring.models import Article, FeedFetchResult, Publication
 from monitoring.parser import entry_to_article
 
-log = logging.getLogger("monitor")
+log = logging.getLogger("mimi")
 
-# A feed whose newest item is older than this has probably been
-# abandoned or frozen by the outlet (it happens — see the README).
-FROZEN_FEED_THRESHOLD_HOURS = 14 * 24
+
+class FeedTooLarge(Exception):
+    """The response exceeded MAX_FEED_BYTES — not a real feed."""
 
 
 def _fetch_bytes(url: str) -> tuple[bytes, dict[str, str]]:
@@ -37,7 +41,11 @@ def _fetch_bytes(url: str) -> tuple[bytes, dict[str, str]]:
         "Accept": "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
     })
     with urllib.request.urlopen(request, timeout=FETCH_TIMEOUT_SECONDS) as response:
-        body = response.read()
+        # Read at most one byte over the cap: a full read() would let a
+        # misconfigured URL (or a hostile server) allocate without limit.
+        body = response.read(MAX_FEED_BYTES + 1)
+        if len(body) > MAX_FEED_BYTES:
+            raise FeedTooLarge()
         # feedparser uses these for encoding detection and resolving
         # relative URLs, so pass along what the server actually said.
         headers = {
@@ -48,6 +56,8 @@ def _fetch_bytes(url: str) -> tuple[bytes, dict[str, str]]:
 
 
 def _friendly_error(exc: Exception) -> str:
+    if isinstance(exc, FeedTooLarge):
+        return f"feed is too large (over {MAX_FEED_BYTES // 1_000_000} MB) — probably not a feed"
     if isinstance(exc, urllib.error.HTTPError):
         return f"server refused the request (HTTP {exc.code} {exc.reason})"
     if isinstance(exc, TimeoutError):
@@ -57,6 +67,28 @@ def _friendly_error(exc: Exception) -> str:
             return f"timed out after {FETCH_TIMEOUT_SECONDS}s"
         return f"could not connect ({exc.reason})"
     return str(exc) or type(exc).__name__
+
+
+def _is_retryable(exc: Exception) -> bool:
+    """Transient failures worth one more try: timeouts, connection
+    problems, server errors, and 403 (bot protection often refuses one
+    request and accepts the next). Other 4xx (404, 410…) are permanent."""
+    if isinstance(exc, urllib.error.HTTPError):
+        return exc.code == 403 or exc.code >= 500
+    return isinstance(exc, (TimeoutError, urllib.error.URLError, ConnectionError))
+
+
+def _fetch_bytes_with_retry(url: str) -> tuple[bytes, dict[str, str]]:
+    for attempt in range(FETCH_RETRIES + 1):
+        try:
+            return _fetch_bytes(url)
+        except Exception as exc:
+            if attempt < FETCH_RETRIES and _is_retryable(exc):
+                log.debug("%s: %s — retrying in %ds",
+                          url, _friendly_error(exc), FETCH_RETRY_DELAY_SECONDS)
+                time.sleep(FETCH_RETRY_DELAY_SECONDS)
+                continue
+            raise
 
 
 def _looks_like_html(body: bytes) -> bool:
@@ -74,7 +106,7 @@ def fetch_feed(publication: Publication, feed_url: str) -> FeedFetchResult:
         ok=False,
     )
     try:
-        body, headers = _fetch_bytes(feed_url)
+        body, headers = _fetch_bytes_with_retry(feed_url)
     except Exception as exc:  # any network problem: report, don't crash
         result.error = _friendly_error(exc)
         result.fetch_seconds = time.monotonic() - started

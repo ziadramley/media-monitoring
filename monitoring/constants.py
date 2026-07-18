@@ -8,13 +8,29 @@ no hunting through logic files to tune behaviour.
 
 # How we identify ourselves to news sites. Descriptive and honest:
 # a site owner reading their logs can see what fetched their feed.
-USER_AGENT = "MediaMonitor/1.0 (local RSS media monitoring; https://github.com/ziadramley/media-monitoring)"
+USER_AGENT = "Mimi/1.0 (local RSS media monitoring; https://github.com/ziadramley/media-monitoring)"
 
 # Seconds to wait for a single feed before giving up on it.
 FETCH_TIMEOUT_SECONDS = 15
 
 # How many feeds to fetch at the same time.
 MAX_CONCURRENT_FETCHES = 8
+
+# The most bytes we'll download for one feed. Real feeds are well under
+# 1 MB; this stops a misconfigured URL (say, a video file) from eating
+# unbounded memory. Matches the cap on POST bodies in the web server.
+MAX_FEED_BYTES = 5_000_000
+
+# A failed fetch (timeout, connection error, HTTP 403/5xx) is retried
+# this many times, after a short pause — outlets with bot protection
+# often refuse one request and accept the next.
+FETCH_RETRIES = 1
+FETCH_RETRY_DELAY_SECONDS = 2
+
+# A feed whose newest item is older than this has probably been
+# abandoned or frozen by the outlet (it happens — see the README).
+# Flagged in the terminal log and the report's warnings widget.
+FROZEN_FEED_THRESHOLD_HOURS = 14 * 24
 
 # Standfirsts longer than this get trimmed at a word boundary.
 STANDFIRST_MAX_CHARS = 300

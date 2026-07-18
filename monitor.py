@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Media Monitor — fetch RSS headlines, filter against your saved
-searches, and open an HTML report.
+"""Mimi — fetch RSS headlines, filter against your saved searches,
+and open an HTML report.
 
 Usage:
     python monitor.py                     # config.yaml + publications.yaml
@@ -22,7 +22,7 @@ from monitoring.constants import DEFAULT_CONFIG_PATH, DEFAULT_PUBLICATIONS_PATH
 from monitoring.pipeline import generate_report
 from monitoring.report import open_in_browser
 
-log = logging.getLogger("monitor")
+log = logging.getLogger("mimi")
 
 
 def main(argv: list[str] | None = None) -> int:

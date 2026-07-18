@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Media Monitor — control panel.
+"""Mimi — control panel.
 
 Starts a small web server on your own machine and opens a browser page
 where you can set keywords, a timeframe, and which outlets to search,
@@ -30,12 +30,12 @@ from monitoring.constants import (
 )
 from monitoring.webserver import create_server
 
-log = logging.getLogger("monitor")
+log = logging.getLogger("mimi")
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Open the Media Monitor control panel in your browser.",
+        description="Open the Mimi control panel in your browser.",
     )
     parser.add_argument("--publications", default=DEFAULT_PUBLICATIONS_PATH,
                         help="path to the publication registry (default: publications.yaml)")

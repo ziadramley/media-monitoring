@@ -1,9 +1,22 @@
-"""Control-panel server helpers: run with  python -m unittest  from the repo root.
+"""Control-panel server tests: run with  python -m unittest  from the repo root.
 
-These cover the pure, security-sensitive bits (path guard, grouping,
-option building) without standing up a live server.
+The first half covers the pure, security-sensitive bits (path guard,
+grouping, option building). The LiveServer half stands up a real
+in-process server — with report generation stubbed so nothing touches
+the network — and drives the routes a browser would: the Host and CSRF
+defences, validation errors, and the save → run → view → prune → delete
+round trip.
 """
+import re
+import tempfile
+import threading
 import unittest
+import urllib.error
+import urllib.parse
+import urllib.request
+from datetime import datetime, timezone
+from pathlib import Path
+from unittest.mock import patch
 
 from monitoring.models import Publication
 from monitoring.webserver import (
@@ -12,6 +25,7 @@ from monitoring.webserver import (
     _grouped_publications,
     build_cards,
     cards_from_queries,
+    create_server,
     parse_cards,
 )
 from monitoring.models import Query
@@ -81,7 +95,7 @@ class ParseCards(unittest.TestCase):
 
 class BuildCards(unittest.TestCase):
     def _cards(self, **over):
-        base = {"token": "0", "name": "", "keywords": "budget", "match": "any",
+        base = {"token": "0", "name": "Q", "keywords": "budget", "match": "any",
                 "date_range": "past_24_hours", "publications": ["bbc"]}
         base.update(over)
         return [base]
@@ -108,9 +122,12 @@ class BuildCards(unittest.TestCase):
         self.assertFalse(ok)
         self.assertIn("publication", view[0]["error"])
 
-    def test_default_section_name_when_blank(self):
-        queries, _, _ = build_cards(self._cards(name=""), _PUBS)
-        self.assertEqual(queries[0].name, "Search 1")
+    def test_blank_name_is_flagged(self):
+        # The editor labels the name mandatory — the backend agrees.
+        queries, view, ok = build_cards(self._cards(name=""), _PUBS)
+        self.assertFalse(ok)
+        self.assertEqual(queries, [])
+        self.assertIn("name", view[0]["error"])
 
     def test_no_cards_is_not_valid(self):
         _, _, ok = build_cards([], _PUBS)
@@ -151,6 +168,11 @@ class ReportNameThreading(unittest.TestCase):
         self.assertIn("3 publications", html)
         self.assertIn("1 result", html)
 
+    def test_printable_carries_no_csrf_token(self):
+        # The portable file gets emailed around — it must never leak the
+        # server's CSRF token (the remove forms exist only in-app).
+        self.assertNotIn("csrf", self._render())
+
     def test_printable_is_minimal(self):
         # The printable file must carry no TOC, no warnings box, no
         # markdown script, and no remove buttons — even with multiple
@@ -169,6 +191,152 @@ class ReportNameThreading(unittest.TestCase):
         self.assertNotIn("could not be reached", html)
         self.assertNotIn("REPORT_MARKDOWN", html)
         self.assertNotIn("remove-article", html)
+
+
+def _fake_result(reports_dir: Path, name: str = "My Report"):
+    """A ReportResult shaped exactly like generate_report's, minus the
+    network: one section, one article, and a real file in reports/."""
+    from monitoring.models import Article
+    from monitoring.pipeline import ReportResult
+    from monitoring.report import ReportSection
+
+    now = datetime(2026, 7, 17, 12, 0, tzinfo=timezone.utc)
+    article = Article(title="Budget rises", url="https://x.com/1", dedupe_key="k1",
+                      publication_id="bbc", publication_name="BBC News",
+                      author=None, published=now, standfirst=None)
+    reports_dir.mkdir(parents=True, exist_ok=True)
+    path = reports_dir / now.strftime("report_%Y-%m-%d_%H-%M-%S.html")
+    path.write_text("<html>portable</html>", encoding="utf-8")
+    section = ReportSection(name="Alpha", anchor="q1", articles=[article],
+                            range_label="past 24 hours", show_depth_note=False,
+                            keywords=["budget"], match="any")
+    return ReportResult(path=path, sections=[section], failed=[], stale=[],
+                        generated_at=now, total_articles=1,
+                        report_name=name, publications=1)
+
+
+class LiveServer(unittest.TestCase):
+    """A real in-process server driven over HTTP. generate_report is
+    stubbed, so these run without the network."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        base = Path(self._tmp.name)
+        self.reports_dir = base / "reports"
+        self.searches_dir = base / "searches"
+        # Port 0 lets the OS pick a free port — create_server returns it.
+        self.server, self.port = create_server(
+            _PUBS, 0, reports_dir=self.reports_dir, searches_dir=self.searches_dir,
+        )
+        threading.Thread(target=self.server.serve_forever, daemon=True).start()
+
+    def tearDown(self):
+        self.server.shutdown()
+        self.server.server_close()
+        self._tmp.cleanup()
+
+    # -- tiny HTTP client (urllib follows the 303s for us) --------------
+    def _request(self, path, data=None, host=None):
+        url = f"http://127.0.0.1:{self.port}{path}"
+        body = urllib.parse.urlencode(data, doseq=True).encode() if data is not None else None
+        request = urllib.request.Request(url, data=body,
+                                         headers={"Host": host} if host else {})
+        try:
+            with urllib.request.urlopen(request, timeout=10) as response:
+                return response.status, response.read().decode("utf-8")
+        except urllib.error.HTTPError as exc:
+            return exc.code, exc.read().decode("utf-8")
+
+    def _csrf(self):
+        _, html = self._request("/")
+        return re.search(r'name="csrf" value="([0-9a-f]+)"', html).group(1)
+
+    def _card(self, csrf, name="UK politics", keywords="budget"):
+        return {
+            "csrf": csrf, "search_name": "Morning Briefing", "card_order": "0",
+            "name__0": name, "keywords__0": keywords, "match__0": "any",
+            "date_range__0": "past_24_hours", "publications__0": ["bbc"],
+        }
+
+    # -- the defences ----------------------------------------------------
+    def test_editor_serves_and_embeds_csrf_token(self):
+        status, html = self._request("/")
+        self.assertEqual(status, 200)
+        self.assertRegex(html, r'name="csrf" value="[0-9a-f]+"')
+
+    def test_wrong_host_is_rejected(self):
+        status, _ = self._request("/", host="evil.example")
+        self.assertEqual(status, 403)
+        status, _ = self._request("/generate", data={"x": "1"}, host="evil.example")
+        self.assertEqual(status, 403)
+
+    def test_post_without_csrf_is_rejected(self):
+        status, html = self._request("/generate", data={"card_order": "0"})
+        self.assertEqual(status, 403)
+        self.assertIn("expired", html)
+
+    def test_localhost_host_header_is_accepted(self):
+        status, _ = self._request("/", host=f"localhost:{self.port}")
+        self.assertEqual(status, 200)
+
+    # -- validation ------------------------------------------------------
+    def test_generate_with_blank_query_name_is_flagged(self):
+        status, html = self._request("/generate", data=self._card(self._csrf(), name=""))
+        self.assertEqual(status, 400)
+        self.assertIn("Give this query a name.", html)
+
+    # -- the whole journey -----------------------------------------------
+    def test_save_run_view_prune_delete_round_trip(self):
+        csrf = self._csrf()
+
+        # Save: redirected back to the editor, which confirms and lists it.
+        status, html = self._request("/save", data=self._card(csrf))
+        self.assertEqual(status, 200)
+        self.assertIn("Saved “Morning Briefing”", html)
+        self.assertIn("Morning Briefing", html)
+
+        # Run it (report generation stubbed): lands on the in-app report.
+        with patch("monitoring.webserver.generate_report",
+                   return_value=_fake_result(self.reports_dir, "Morning Briefing")):
+            status, html = self._request("/run/morning-briefing", data={"csrf": csrf})
+        self.assertEqual(status, 200)
+        self.assertIn("Budget rises", html)
+        self.assertIn("Printable version", html)
+
+        # Prune the only article: the report page now says so.
+        status, html = self._request(
+            "/report/remove", data={"csrf": csrf, "anchor": "q1", "key": "k1"})
+        self.assertEqual(status, 200)
+        self.assertIn("No matching articles found", html)
+        self.assertNotIn("Budget rises", html)
+
+        # Delete the saved search: the nav empties out.
+        status, html = self._request("/delete/morning-briefing", data={"csrf": csrf})
+        self.assertEqual(status, 200)
+        self.assertIn("Saved searches will appear here.", html)
+
+    def test_stale_feed_warning_shows_in_report_view(self):
+        from monitoring.models import FeedFetchResult
+        csrf = self._csrf()
+        self._request("/save", data=self._card(csrf) | {"search_name": "Daily"})
+        result = _fake_result(self.reports_dir, "Daily")
+        result.stale.append(FeedFetchResult(
+            "bbc", "BBC News", "https://x/rss", ok=True, newest_age_hours=720.0))
+        with patch("monitoring.webserver.generate_report", return_value=result):
+            status, html = self._request("/run/daily", data={"csrf": csrf})
+        self.assertEqual(status, 200)
+        self.assertIn("1 feed may be frozen", html)
+        self.assertIn("newest item is 30 days old", html)
+
+    def test_report_file_serving_and_traversal_guard(self):
+        self.reports_dir.mkdir(parents=True, exist_ok=True)
+        good = "report_2026-07-17_12-00-00.html"
+        (self.reports_dir / good).write_text("<html>archived</html>", encoding="utf-8")
+        status, html = self._request(f"/reports/{good}")
+        self.assertEqual(status, 200)
+        self.assertIn("archived", html)
+        status, _ = self._request("/reports/../config.yaml")
+        self.assertEqual(status, 404)
 
 
 if __name__ == "__main__":
