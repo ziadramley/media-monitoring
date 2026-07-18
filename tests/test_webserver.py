@@ -285,6 +285,36 @@ class LiveServer(unittest.TestCase):
         self.assertEqual(status, 400)
         self.assertIn("Give this query a name.", html)
 
+    def test_overlong_search_name_is_rejected_on_save(self):
+        data = self._card(self._csrf()) | {"search_name": "x" * 25}
+        status, html = self._request("/save", data=data)
+        self.assertEqual(status, 400)
+        self.assertIn("20 characters", html)
+
+    def test_overlong_search_name_is_rejected_on_generate(self):
+        data = self._card(self._csrf()) | {"search_name": "x" * 25}
+        status, html = self._request("/generate", data=data)
+        self.assertEqual(status, 400)
+        self.assertIn("20 characters", html)
+
+    # -- the collapsed saved-search menu ---------------------------------
+    def test_saved_searches_collapse_into_one_menu(self):
+        csrf = self._csrf()
+        self._request("/save", data=self._card(csrf))
+        status, html = self._request("/")
+        self.assertEqual(status, 200)
+        # One menu control with a count, and the name reachable inside it as
+        # the Edit trigger — not a flat row of nav items. Run and Delete sit
+        # alongside as their own actions.
+        self.assertIn("nav-menu-label", html)
+        self.assertIn("Saved searches", html)
+        self.assertIn("(1)", html)
+        self.assertIn("nav-row-name", html)
+        self.assertIn("Morning Briefing", html)
+        # Clicking the name opens the editor; Run is a separate action.
+        self.assertIn('action="/edit/morning-briefing"', html)
+        self.assertIn('action="/run/morning-briefing"', html)
+
     # -- the whole journey -----------------------------------------------
     def test_save_run_view_prune_delete_round_trip(self):
         csrf = self._csrf()

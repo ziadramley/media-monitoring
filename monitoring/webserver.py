@@ -45,6 +45,7 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from monitoring.constants import (
     DATE_RANGES,
     REPORTS_DIR,
+    SEARCH_NAME_MAX_LEN,
     SEARCHES_DIR,
     WEB_HOST,
     WEB_PORT_SCAN_LIMIT,
@@ -102,6 +103,10 @@ def _date_range_options() -> list[tuple[str, str]]:
     """(value, label) pairs for the timeframe dropdown, e.g.
     ('past_24_hours', 'Past 24 hours')."""
     return [(key, f"Past {hours} hours") for key, hours in DATE_RANGES.items()]
+
+
+def _name_too_long_error() -> str:
+    return f"Search name must be {SEARCH_NAME_MAX_LEN} characters or fewer."
 
 
 def _grouped_publications(publications: dict[str, Publication]) -> list[tuple[str, list[Publication]]]:
@@ -454,6 +459,12 @@ def make_handler(
         def _generate(self, fields: dict[str, list[str]]) -> None:
             search_name = (fields.get("search_name", [""])[0] or "").strip()
             queries, view, ok = build_cards(parse_cards(fields), publications)
+            if len(search_name) > SEARCH_NAME_MAX_LEN:
+                self._render_editor(
+                    view or default_cards(publications), search_name, status=400,
+                    top_error=_name_too_long_error(),
+                )
+                return
             if not ok:
                 self._render_editor(
                     view or default_cards(publications), search_name, status=400,
@@ -496,6 +507,12 @@ def make_handler(
             # silently.
             search_name = (fields.get("search_name", [""])[0] or "").strip()
             queries, view, _ok = build_cards(parse_cards(fields), publications)
+            if len(search_name) > SEARCH_NAME_MAX_LEN:
+                self._render_editor(
+                    view or default_cards(publications), search_name, status=400,
+                    top_error=_name_too_long_error(),
+                )
+                return
             if not slugify(search_name):
                 self._render_editor(
                     view or default_cards(publications), search_name, status=400,

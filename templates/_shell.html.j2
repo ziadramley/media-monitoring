@@ -33,21 +33,37 @@
     padding: 0.45em 0.9em; border-radius: 3px; text-decoration: none; white-space: nowrap; }
   .new-report-btn:hover { background: #000; }
   .nav-empty { font-style: italic; font-size: 0.8rem; color: var(--ink-faint); }
-  .nav-section { position: relative; }
-  .nav-section > .nav-section-name { display: inline-block; font-family: Georgia, serif;
+
+  /* Saved-search menu: one control that opens a scrollable index panel, so the
+     nav stays a single fixed-height row however many searches exist — which also
+     keeps the report view's widget-positioning JS (measured off the nav's
+     bottom) correct no matter the count. */
+  .nav-menu { position: relative; }
+  .nav-menu > .nav-menu-label { display: inline-block; font-family: Georgia, serif;
     text-transform: uppercase; letter-spacing: 0.09em; font-size: 0.75rem; color: var(--ink);
     padding: 0.35rem 0.1rem; cursor: default; border-bottom: 2px solid transparent; }
-  .nav-section:hover > .nav-section-name, .nav-section:focus-within > .nav-section-name {
+  .nav-menu:hover > .nav-menu-label, .nav-menu:focus-within > .nav-menu-label {
     border-bottom-color: var(--rule-ink); }
-  .nav-dropdown { position: absolute; top: 100%; left: 0; z-index: 5; min-width: 8rem;
+  .nav-count { color: var(--ink-faint); }
+  .nav-menu-panel { position: absolute; top: 100%; left: 0; z-index: 20; min-width: 20rem;
     background: var(--field); border: 1px solid var(--rule); border-radius: 3px;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.09); padding: 0.25rem 0; display: none; }
-  .nav-section:hover > .nav-dropdown, .nav-section:focus-within > .nav-dropdown { display: block; }
-  .nav-dropdown a, .nav-dropdown button { display: block; width: 100%; text-align: left;
-    font-family: Georgia, serif; font-size: 0.88rem; color: var(--ink); background: none; border: none;
-    padding: 0.4rem 0.9rem; text-decoration: none; cursor: pointer; }
-  .nav-dropdown a:hover, .nav-dropdown button:hover { background: var(--note-bg); }
-  .nav-dropdown form { margin: 0; }
+    box-shadow: 0 4px 14px rgba(0,0,0,0.09); display: none; }
+  .nav-menu:hover > .nav-menu-panel, .nav-menu:focus-within > .nav-menu-panel { display: block; }
+  .nav-menu-scroll { max-height: min(60vh, 26rem); overflow-y: auto; padding: 0.15rem 0; }
+  .nav-row { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem;
+    padding: 0.4rem 0.9rem; border-bottom: 1px solid var(--rule); }
+  .nav-row:last-child { border-bottom: none; }
+  .nav-row-name-form { margin: 0; flex: 1; min-width: 0; }
+  .nav-row-name { display: block; width: 100%; text-align: left; font-family: Georgia, serif;
+    text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.8rem; color: var(--ink);
+    background: none; border: none; cursor: pointer; padding: 0; }
+  .nav-row-name:hover { text-decoration: underline; text-underline-offset: 2px; }
+  .nav-row-actions { display: flex; gap: 0.7rem; white-space: nowrap; }
+  .nav-row-actions form { margin: 0; }
+  .nav-row-actions button { font-family: Georgia, serif; font-size: 0.72rem; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--ink-faint); background: none; border: none; cursor: pointer; padding: 0; }
+  .nav-row:hover .nav-row-actions button, .nav-row:focus-within .nav-row-actions button { color: var(--ink-soft); }
+  .nav-row-actions button:hover { color: var(--ink); text-decoration: underline; }
 
   /* Info button + modal */
   .info-btn { font-family: Georgia, serif; font-size: 0.72rem; text-transform: uppercase;
@@ -97,28 +113,38 @@
   <nav class="section-nav">
     <button type="button" class="info-btn" onclick="openInfo()">Info</button>
     <a class="new-report-btn" href="/?new=1" onclick="return confirmNew();">New search</a>
-    {% for s in saved_searches %}
-    <div class="nav-section" tabindex="0">
-      <span class="nav-section-name">{{ s.name }}</span>
-      <div class="nav-dropdown">
-        {#- Run/Edit/Delete all change state, so all three are POST forms
-            carrying the CSRF token — another website can't trigger them. -#}
-        <form method="post" action="/run/{{ s.slug }}">
-          <input type="hidden" name="csrf" value="{{ csrf }}">
-          <button type="submit">Run</button>
-        </form>
-        <form method="post" action="/edit/{{ s.slug }}">
-          <input type="hidden" name="csrf" value="{{ csrf }}">
-          <button type="submit">Edit</button>
-        </form>
-        <form class="delete-form" method="post" action="/delete/{{ s.slug }}" data-name="{{ s.name }}">
-          <input type="hidden" name="csrf" value="{{ csrf }}">
-          <button type="submit">Delete</button>
-        </form>
+    {#- All saved searches collapse behind ONE menu, so the nav stays a single
+        row however many exist. The panel scrolls internally; each row's name is
+        the Edit trigger (click to open it in the editor), with Run and Delete
+        alongside. All three change state, so all are POST forms with the CSRF
+        token. -#}
+    {% if saved_searches %}
+    <div class="nav-menu" tabindex="0" aria-haspopup="true">
+      <span class="nav-menu-label">Saved searches <span class="nav-count">({{ saved_searches|length }})</span> &#9662;</span>
+      <div class="nav-menu-panel" role="menu">
+        <div class="nav-menu-scroll">
+          {% for s in saved_searches %}
+          <div class="nav-row">
+            <form class="nav-row-name-form" method="post" action="/edit/{{ s.slug }}">
+              <input type="hidden" name="csrf" value="{{ csrf }}">
+              <button type="submit" class="nav-row-name" title="Edit “{{ s.name }}”">{{ s.name }}</button>
+            </form>
+            <span class="nav-row-actions">
+              <form method="post" action="/run/{{ s.slug }}">
+                <input type="hidden" name="csrf" value="{{ csrf }}">
+                <button type="submit">Run</button>
+              </form>
+              <form class="delete-form" method="post" action="/delete/{{ s.slug }}" data-name="{{ s.name }}">
+                <input type="hidden" name="csrf" value="{{ csrf }}">
+                <button type="submit">Delete</button>
+              </form>
+            </span>
+          </div>
+          {% endfor %}
+        </div>
       </div>
     </div>
-    {% endfor %}
-    {% if not saved_searches %}<span class="nav-empty">Saved searches will appear here.</span>{% endif %}
+    {% else %}<span class="nav-empty">Saved searches will appear here.</span>{% endif %}
   </nav>
 
   {% block content %}{% endblock %}
@@ -169,7 +195,12 @@
     if (e.target === this) closeInfo();  // click on the backdrop closes
   });
   document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape") closeInfo();
+    if (e.key !== "Escape") return;
+    closeInfo();
+    // Close the saved-search menu too: it opens via :focus-within, so blurring
+    // the focused element inside it lets it collapse.
+    var active = document.activeElement;
+    if (active && active.closest && active.closest(".nav-menu")) active.blur();
   });
 
   // "New search" confirmation.

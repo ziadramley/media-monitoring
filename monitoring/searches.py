@@ -20,7 +20,7 @@ from pathlib import Path
 import yaml
 
 from monitoring.config import ConfigError, build_queries
-from monitoring.constants import SEARCHES_DIR
+from monitoring.constants import SEARCH_NAME_MAX_LEN, SEARCHES_DIR
 from monitoring.models import Publication, Query
 
 # A slug is lowercase letters, digits and single hyphens — nothing that
@@ -80,6 +80,8 @@ def save_search(
     slug = slugify(name)
     if not slug:
         raise ValueError("Please give the search a name using letters or numbers.")
+    if len(name.strip()) > SEARCH_NAME_MAX_LEN:
+        raise ValueError(f"Search name must be {SEARCH_NAME_MAX_LEN} characters or fewer.")
     path = _safe_path(slug, searches_dir)
     path.parent.mkdir(parents=True, exist_ok=True)
     document = {"name": name.strip(), "queries": _queries_to_raw(queries)}

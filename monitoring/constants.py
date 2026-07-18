@@ -68,6 +68,11 @@ REPORT_FILENAME_FORMAT = "report_%Y-%m-%d_%H-%M-%S.html"
 # Personal working data — gitignored like reports/.
 SEARCHES_DIR = "searches"
 
+# Longest a search name may be. Kept short so saved searches stay legible in
+# the nav menu and don't overflow it. Enforced in the browser (maxlength),
+# the web server, and save_search() — three layers so it can't be bypassed.
+SEARCH_NAME_MAX_LEN = 20
+
 # Default file names, relative to the working directory.
 DEFAULT_CONFIG_PATH = "config.yaml"
 DEFAULT_PUBLICATIONS_PATH = "publications.yaml"

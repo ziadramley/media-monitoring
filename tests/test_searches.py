@@ -94,6 +94,16 @@ class RoundTrip(unittest.TestCase):
             with self.assertRaises(ValueError):
                 save_search("   ", [a_query()], d)
 
+    def test_save_overlong_name_rejected(self):
+        with tempfile.TemporaryDirectory() as d:
+            with self.assertRaises(ValueError):
+                save_search("x" * 21, [a_query()], d)  # cap is 20
+
+    def test_save_name_at_limit_is_allowed(self):
+        with tempfile.TemporaryDirectory() as d:
+            slug = save_search("x" * 20, [a_query()], d)
+            self.assertEqual(load_search(slug, PUBS, d).name, "x" * 20)
+
 
 class BrokenFiles(unittest.TestCase):
     def test_unparseable_file_is_skipped_not_fatal(self):

@@ -141,9 +141,9 @@
 
     <div class="report-bar">
       <label class="q" for="search_name">Search name</label>
-      <p class="hint">Name it so it’s easy to find later. Generating a report saves the search too — an unnamed one is saved as “Untitled Search”.</p>
+      <p class="hint">Name it so it’s easy to find later (up to 20 characters). Generating a report saves the search too — an unnamed one is saved as “Untitled Search”.</p>
       <div class="report-bar-row">
-        <input type="text" id="search_name" name="search_name" value="{{ search_name }}" placeholder="e.g. Morning briefing">
+        <input type="text" id="search_name" name="search_name" value="{{ search_name }}" maxlength="20" placeholder="e.g. Morning briefing">
         <button type="submit" formaction="/save" class="save">Save search</button>
       </div>
     </div>
