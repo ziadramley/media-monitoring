@@ -2,27 +2,23 @@
 
 A local media-monitoring tool for press and comms teams. Run one command and
 get a clean, printable HTML report of recent headlines from major UK and US
-outlets, filtered against searches you define — opened automatically in your
-browser.
+outlets, filtered against searches you define.
 
 Everything runs on your own machine. The only network traffic is fetching the
-outlets' public RSS feeds, exactly as a feed reader would.
+outlets' public RSS feeds. No personal data, performance data, or analytical data is collected.
 
-**One user, one machine.** Mimi is deliberately a personal tool: one copy per
-person, each with their own saved searches and reports. Don't run it as a
-shared server for a team — it has no accounts, so everyone would share (and
-could delete) the same searches, reports, and last-generated view. "More
-users" means more installs, and the 5-minute setup below is the whole cost.
+**One user, one machine.** Mimi is a personal tool: one copy per
+person, each with their own saved searches and reports. Organisations who want a team version can simply layer their own auth provider on top.
 
-## What it does — and deliberately doesn't
+## What it does and doesn't
 
-**It does:** fetch headlines, standfirsts (summary lines), author names,
-publication times, and article links from official publisher RSS feeds, filter
-them against your saved searches, and produce one self-contained HTML report
+**It does:** fetch headlines, standfirsts (summary lines), publication names,
+publication times, and article links from official publisher RSS feeds. filters
+them against your saved searches. produces one self-contained HTML report
 you can print, email, or archive.
 
 **It doesn't:** scrape full article text, use AI, call any paid API, need any
-account or key, or send anything anywhere. RSS feeds are what publishers
+account or key, or send your data off your machine. RSS feeds are what publishers
 choose to make public; reading the full articles is what your subscriptions
 are for.
 
@@ -43,11 +39,10 @@ python3 -m venv .venv                      # a private sandbox for this tool
 
 Now pick how you want to use it — there are two ways.
 
-### Two ways to run it
+### How to run it
 
-**1. The control panel (easiest — no files to edit).** A page opens in your
-browser where you build a search out of one or more queries — each query gets
-a name, keywords, a timeframe, and a set of outlets — then click **Generate
+**The control panel** A page opens in your
+browser where you build a search out of one or more queries, then click **Generate
 report**.
 
 ```bash
@@ -73,15 +68,12 @@ In the panel you can:
 Leave it running and come back to the browser tab whenever you want another
 search. Press `Ctrl+C` in the terminal to stop it.
 
-**Feeling lucky?** The **I'm feeling lucky** button in the bar (careful —
-it's flammable) rolls a random search and runs it immediately: one to five
-queries, each drawing a random keyword from the ~900-entry pool in
-[lucky.yaml](lucky.yaml) — every current UK MP and US senator, world leaders,
-big companies, and a stack of topics — pointed at all-UK outlets, all-US
+**Feeling lucky?** The **I'm feeling lucky** button in the bar rolls a random search and runs it immediately: one to five queries, each drawing a random keyword from the ~900-entry pool in
+[lucky.yaml](lucky.yaml) pointed at all-UK outlets, all-US
 outlets, or everything, over a random timeframe. Each roll is saved as
 *Lucky Search N* so a good one can be re-run or edited like any other search.
 One caveat: the MP and senator rosters were **verified as of 18 July 2026**
-and go stale with every election — refresh the lists in `lucky.yaml` now and
+and go stale with every election. Refresh the lists in `lucky.yaml` now and
 then (the file header says where they came from).
 
 Saved searches live in a `searches/` folder as small YAML files in the same
@@ -90,21 +82,6 @@ from the command line: `python monitor.py --config searches/morning-briefing.yam
 (The panel and `config.yaml` are independent: the panel writes only to
 `searches/` and never touches `config.yaml`, which stays yours to hand-edit for
 the daily `python monitor.py` run.)
-
-**2. Saved daily searches (for the same searches every morning).** Define
-your standing searches once in `config.yaml`, then run one command to get a
-report covering all of them at once.
-
-```bash
-.venv/bin/python monitor.py
-```
-
-The repo ships with three example searches that work out of the box; edit
-[config.yaml](config.yaml) to make them yours.
-
-Both routes use the same engine and produce the same report — the control
-panel is just a friendlier front door for people who'd rather not touch a
-config file.
 
 ## Defining your searches
 
@@ -129,8 +106,7 @@ Matching rules, in plain terms:
 - Whole words only — a search for `AI` won't light up every article
   containing the word "said".
 
-A section with no matches still appears in the report, saying so — for a
-comms team, the *absence* of coverage is information too.
+A section with no matches still appears in the report. An absence of coverage is information too.
 
 ## Adding a publication
 
@@ -160,12 +136,7 @@ in the registry:
 | The Times | Removed all its RSS feeds in 2023 |
 | Reuters | Discontinued public RSS in June 2020 |
 | Associated Press | Its only feed now requires authentication |
-| CNN | Feeds still respond, but froze in April 2023 — they look alive and aren't |
-
-CNN is the cautionary tale: a feed can return valid XML forever while quietly
-serving years-old news. That's why the terminal log prints the **age of each
-feed's newest item** on every run — if a feed in your registry rots, you'll
-see it.
+| CNN | Feeds still respond, but froze in April 2023. They look alive but aren't |
 
 ## An honest limitation: RSS depth
 
@@ -262,5 +233,5 @@ Run the tests with `.venv/bin/python -m unittest`.
 ## Licence
 
 [MIT](LICENSE). Headlines, standfirsts, and links belong to their publishers;
-this tool only rearranges what they publish in their public feeds, and links
+this tool only rearranges what they publish in their public feeds and links
 back to them.

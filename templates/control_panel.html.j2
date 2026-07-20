@@ -141,7 +141,7 @@
 
     <div class="report-bar">
       <label class="q" for="search_name">Search name</label>
-      <p class="hint">Name it so it’s easy to find later (up to 20 characters). Generating a report saves the search too — an unnamed one is saved as “Untitled Search”.</p>
+      <p class="hint">Give your search a name so it’s easy to find later (up to 20 characters).</p>
       <div class="report-bar-row">
         <input type="text" id="search_name" name="search_name" value="{{ search_name }}" maxlength="20" placeholder="e.g. Morning briefing">
         <button type="submit" formaction="/save" class="save">Save search</button>
@@ -160,9 +160,8 @@
   </form>
 
   <p class="footnote">
-    Mimi runs entirely on your machine so your data stays with you. Only the outlets’ RSS feeds are contacted.<br>
-    Saved searches live in the <code>searches/</code> folder and also work from the command line:
-    <code>python monitor.py --config searches/your-search.yaml</code>
+    Mimi runs entirely on your machine so your data stays with you. No personal data, performance data, or analytical data is collected.
+    An internet connection is required to fetch the latest headlines.
   </p>
 
   <!-- Template for a fresh query card, cloned by "Add a new query". -->
