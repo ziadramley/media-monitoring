@@ -37,17 +37,16 @@ python3 -m venv .venv                      # a private sandbox for this tool
 > On Windows, the `.venv/bin/...` commands below are `.venv\Scripts\pip` and
 > `.venv\Scripts\python`.
 
-Now pick how you want to use it — there are two ways.
 
 ### How to run it
-
-**The control panel** A page opens in your
-browser where you build a search out of one or more queries, then click **Generate
-report**.
 
 ```bash
 .venv/bin/python webapp.py
 ```
+
+**The control panel** 
+A page opens in your browser where you build a search out of one or more queries, then click **Generate
+report**.
 
 In the panel you can:
 
